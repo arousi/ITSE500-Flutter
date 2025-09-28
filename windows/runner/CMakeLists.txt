@@ -17,12 +17,6 @@ add_executable(${BINARY_NAME} WIN32
   "${FLUTTER_MANAGED_DIR}/generated_plugin_registrant.cc"
   "Runner.rc"
   "runner.exe.manifest"
-  FILE_SET HEADERS
-    BASE_DIRS "."
-    FILES
-      "flutter_window.h"
-      "utils.h"
-      "win32_window.h"
 )
 
 # Apply the standard set of build settings. This can be removed for applications
@@ -46,10 +40,7 @@ target_link_libraries(${BINARY_NAME} PRIVATE "dwmapi.lib")
 # Include both the windows root (CMAKE_SOURCE_DIR) and this runner directory explicitly.
 # Some CI environments resolve relative includes more strictly; adding CURRENT_SOURCE_DIR ensures
 # headers like "flutter_window.h" are found.
-target_include_directories(${BINARY_NAME} PRIVATE
-  $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-)
+target_include_directories(${BINARY_NAME} PRIVATE "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
 
 # Run the Flutter tool portions of the build. This must not be removed.
 add_dependencies(${BINARY_NAME} flutter_assemble)
