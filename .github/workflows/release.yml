@@ -170,8 +170,8 @@ jobs:
                     }
                   } else { Write-Host 'icudtl.dat present at runtime root.' }
                   # Check for any plugin dlls (at least one *_plugin.dll) – warn if none
-                  $plugins = Get-ChildItem $runtimeDir -Filter '*_plugin.dll' | Select-Object -First 1
-                  if (-not $plugins) { Write-Warning 'No *_plugin.dll files detected. If plugins are expected, verify Windows implementation.' }
+                  $pluginList = Get-ChildItem $runtimeDir -Filter '*_plugin.dll'
+                  if (-not $pluginList) { Write-Warning 'No *_plugin.dll files detected. If plugins are expected, verify Windows implementation.' }
               shell: pwsh
             - name: Prepare Windows bundle (README + manifest)
               shell: pwsh
@@ -191,8 +191,12 @@ jobs:
                     '',
                     "Version: $env:RELEASE_TAG"
                   ) | Set-Content -Path (Join-Path $runtimeDir 'README-WINDOWS.txt') -Encoding UTF8
-                  Get-ChildItem $runtimeDir -Filter '*_plugin.dll' | Select-Object -ExpandProperty Name | Set-Content (Join-Path $runtimeDir 'plugin_dlls.txt') -Encoding UTF8
-                  Write-Host 'Generated README-WINDOWS.txt and plugin_dlls.txt'
+                  $pluginDir = Join-Path $runtimeDir 'plugins'
+                  if (-not (Test-Path $pluginDir)) { New-Item -ItemType Directory -Path $pluginDir | Out-Null }
+                  $plugins = Get-ChildItem $runtimeDir -Filter '*_plugin.dll'
+                  $plugins | ForEach-Object { Move-Item $_.FullName (Join-Path $pluginDir $_.Name) }
+                  $plugins | Select-Object -ExpandProperty Name | Set-Content (Join-Path $pluginDir 'plugin_dlls.txt') -Encoding UTF8
+                  Write-Host 'Moved plugin DLLs into plugins/ and generated plugin_dlls.txt'
             - name: Package Windows zip
               run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath windows-${{ env.RELEASE_TAG }}.zip
               shell: pwsh
@@ -205,11 +209,13 @@ jobs:
                   Expand-Archive -Path $zip -DestinationPath $extract
                   Write-Host 'Extracted zip contents:'
                   Get-ChildItem $extract | Select-Object Name,Length | Format-Table | Out-String | Write-Host
-                  $manifest = Join-Path $extract 'plugin_dlls.txt'
-                  if (-not (Test-Path $manifest)) { Write-Error 'plugin_dlls.txt missing from zip' }
+                  $pluginDir = Join-Path $extract 'plugins'
+                  if (-not (Test-Path $pluginDir)) { Write-Error 'plugins directory missing in zip' }
+                  $manifest = Join-Path $pluginDir 'plugin_dlls.txt'
+                  if (-not (Test-Path $manifest)) { Write-Error 'plugin_dlls.txt missing from plugins directory' }
                   $dlls = Get-Content $manifest
                   foreach ($d in $dlls) {
-                    if (-not (Test-Path (Join-Path $extract $d))) { Write-Error "Missing plugin DLL inside zip: $d" }
+                    if (-not (Test-Path (Join-Path $pluginDir $d))) { Write-Error "Missing plugin DLL inside plugins directory: $d" }
                   }
                   if (-not (Test-Path (Join-Path $extract 'icudtl.dat'))) { Write-Warning 'icudtl.dat not at zip root AFTER packaging (should have been copied). Check runtime integrity.' }
             - name: (Optional) Build MSIX via script if cert present
