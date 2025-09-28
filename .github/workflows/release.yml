@@ -62,15 +62,20 @@ jobs:
               run: |
                   mkdir -p dist/android
                   # Copy and rename AAB
+                  found_aab=false
                   for f in build/app/outputs/bundle/release/*.aab; do
-                    [ -f "$f" ] && cp "$f" "dist/android/app-bundle-${{ env.RELEASE_TAG }}.aab" || true;
+                    if [ -f "$f" ]; then
+                      cp "$f" "dist/android/app-bundle-${{ env.RELEASE_TAG }}.aab"; found_aab=true; break; fi
                   done
+                  if [ "$found_aab" = false ]; then echo 'No AAB found at expected path'; fi
                   # Copy and rename universal APK (may not exist if split per-abi)
                   if [ -f build/app/outputs/flutter-apk/app-release.apk ]; then
                     cp build/app/outputs/flutter-apk/app-release.apk dist/android/app-universal-${{ env.RELEASE_TAG }}.apk;
                   else
                     echo "No universal app-release.apk found (possibly split builds).";
                   fi
+                  echo 'Android dist contents:'
+                  ls -l dist/android || true
               shell: bash
             - name: Upload Android artifacts
               uses: actions/upload-artifact@v4
@@ -181,11 +186,16 @@ jobs:
             - name: Collect Windows artifacts
               run: |
                   New-Item -ItemType Directory -Force -Path dist\windows | Out-Null
-                  Move-Item windows-${{ env.RELEASE_TAG }}.zip dist/windows/
-                  # Copy raw exe for convenience alongside zip
-                  $exe = Get-ChildItem build/windows/x64/runner/Release -Filter *.exe | Select-Object -First 1
-                  if ($exe) { Copy-Item $exe.FullName dist/windows/($exe.BaseName + '-${{ env.RELEASE_TAG }}' + $exe.Extension) }
-                  if (Test-Path *.msix) { Move-Item *.msix dist/windows/ }
+                  Move-Item -Path windows-${{ env.RELEASE_TAG }}.zip -Destination dist/windows/
+                  # Locate runner .exe (should match BINARY_NAME) and copy with versioned name
+                  $exe = Get-ChildItem -Path build/windows/x64/runner/Release -Filter *.exe | Select-Object -First 1
+                  if ($exe) {
+                    $versioned = "$($exe.BaseName)-${{ env.RELEASE_TAG }}$($exe.Extension)"
+                    Copy-Item -Path $exe.FullName -Destination (Join-Path dist/windows $versioned)
+                  } else {
+                    Write-Warning 'No Windows .exe found in build output.'
+                  }
+                  if (Test-Path *.msix) { Move-Item -Path *.msix -Destination dist/windows/ }
               shell: pwsh
             - name: Upload Windows artifacts
               uses: actions/upload-artifact@v4
