@@ -229,7 +229,17 @@ jobs:
                   # Download Inno Setup
                   $url = 'https://jrsoftware.org/download.php/is.exe'
                   Invoke-WebRequest -Uri $url -OutFile inno_setup.exe
-                  Start-Process .\inno_setup.exe /VERYSILENT /SUPPRESSMSGBOXES /SP- /NORESTART /DIR="C:\InnoSetup" -Wait
+                  # Install Inno Setup silently. Using call operator instead of Start-Process to avoid argument binding issues.
+                  & .\inno_setup.exe /VERYSILENT /SUPPRESSMSGBOXES /SP- /NORESTART /DIR="C:\InnoSetup"
+                  if ($LASTEXITCODE -ne 0 -or -not (Test-Path 'C:\InnoSetup\ISCC.exe')) {
+                    Write-Host 'Primary installer method failed or ISCC.exe missing; attempting Chocolatey fallback.'
+                    $choco = Get-Command choco.exe -ErrorAction SilentlyContinue
+                    if ($choco) {
+                      choco install innosetup -y --no-progress
+                    } else {
+                      Write-Error 'Failed to install Inno Setup and Chocolatey not available.'
+                    }
+                  }
                   $iscc = 'C:\InnoSetup\ISCC.exe'
                   if (-not (Test-Path $iscc)) { Write-Error 'ISCC.exe not found after install' }
                   & $iscc scripts\installer\windows_installer.iss /DMyAppVersion=${{ env.RELEASE_TAG }}
