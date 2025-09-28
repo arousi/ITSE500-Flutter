@@ -116,8 +116,18 @@ jobs:
             - name: Validate toolchain info (debug)
               shell: pwsh
               run: |
-                  Write-Host "Using VS Build Tools version:"; & cl.exe 2>&1 | Select-Object -First 1
                   Write-Host "Git SHA: $env:GITHUB_SHA"
+                  $cl = Get-Command cl.exe -ErrorAction SilentlyContinue
+                  if ($cl) {
+                    Write-Host "MSVC detected at: $($cl.Source)"
+                    & cl.exe 2>&1 | Select-Object -First 1 | Write-Host
+                  } else {
+                    Write-Warning 'cl.exe not on PATH (expected before vcvars setup); build will still proceed via CMake/VS generator.'
+                  }
+                  $vswhere = "$Env:ProgramFiles(x86)\Microsoft Visual Studio\Installer\vswhere.exe"
+                  if (Test-Path $vswhere) {
+                    & $vswhere -latest -products * -format json | Out-Null
+                  }
             - name: Debug list runner sources
               run: |
                   Write-Host 'Listing windows/runner contents:'
