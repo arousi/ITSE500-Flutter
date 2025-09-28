@@ -218,6 +218,23 @@ jobs:
                     if (-not (Test-Path (Join-Path $pluginDir $d))) { Write-Error "Missing plugin DLL inside plugins directory: $d" }
                   }
                   if (-not (Test-Path (Join-Path $extract 'icudtl.dat'))) { Write-Warning 'icudtl.dat not at zip root AFTER packaging (should have been copied). Check runtime integrity.' }
+            - name: Build Windows Installer (Inno Setup)
+              shell: pwsh
+              run: |
+                  $runtimeDir = "build/windows/x64/runner/Release"
+                  $stage = "installer_staging"
+                  if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
+                  New-Item -ItemType Directory -Path $stage | Out-Null
+                  Copy-Item $runtimeDir\* $stage -Recurse
+                  # Download Inno Setup
+                  $url = 'https://jrsoftware.org/download.php/is.exe'
+                  Invoke-WebRequest -Uri $url -OutFile inno_setup.exe
+                  Start-Process .\inno_setup.exe /VERYSILENT /SUPPRESSMSGBOXES /SP- /NORESTART /DIR="C:\InnoSetup" -Wait
+                  $iscc = 'C:\InnoSetup\ISCC.exe'
+                  if (-not (Test-Path $iscc)) { Write-Error 'ISCC.exe not found after install' }
+                  & $iscc scripts\installer\windows_installer.iss /DMyAppVersion=${{ env.RELEASE_TAG }}
+                  $installer = Get-ChildItem -Filter "ITSE500-Setup-${{ env.RELEASE_TAG }}.exe" | Select-Object -First 1
+                  if (-not $installer) { Write-Error 'Installer build failed' } else { Write-Host "Built installer: $($installer.Name)" }
             - name: (Optional) Build MSIX via script if cert present
               env:
                   WINDOWS_CERT_PFX: ${{ secrets.WINDOWS_CERT_PFX }}
@@ -238,6 +255,8 @@ jobs:
                   # Keep only the zipped bundle (includes exe + required DLLs) to avoid users running a bare exe without dependencies
                   Move-Item -Path windows-${{ env.RELEASE_TAG }}.zip -Destination dist/windows/
                   if (Test-Path *.msix) { Move-Item -Path *.msix -Destination dist/windows/ }
+                  $installer = Get-ChildItem -Filter "ITSE500-Setup-${{ env.RELEASE_TAG }}.exe" | Select-Object -First 1
+                  if ($installer) { Move-Item $installer.FullName dist/windows/ }
               shell: pwsh
             - name: Upload Windows artifacts
               uses: actions/upload-artifact@v4
