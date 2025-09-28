@@ -112,10 +112,11 @@ app.*.map.json
 .flutter-setup
 .melos_tool/
 pubspec.lock
-*.cmake
-*.h
-*.cc
-*.swift
+# Removed overly broad patterns that prevented committing essential source/header files
+# *.cmake
+# *.h
+# *.cc
+# *.swift
 
 # iOS related
 **/ios/Flutter/App.framework
