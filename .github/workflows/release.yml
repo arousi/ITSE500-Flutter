@@ -222,7 +222,8 @@ jobs:
               shell: pwsh
               run: |
                   $runtimeDir = "build/windows/x64/runner/Release"
-                  $stage = "installer_staging"
+                  # Stage inside scripts/installer so relative path in .iss (installer_staging\\*) resolves correctly
+                  $stage = "scripts/installer/installer_staging"
                   if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
                   New-Item -ItemType Directory -Path $stage | Out-Null
                   Copy-Item $runtimeDir\* $stage -Recurse
@@ -231,17 +232,13 @@ jobs:
                   Invoke-WebRequest -Uri $url -OutFile inno_setup.exe
                   # Install Inno Setup silently. Using call operator instead of Start-Process to avoid argument binding issues.
                   & .\inno_setup.exe /VERYSILENT /SUPPRESSMSGBOXES /SP- /NORESTART /DIR="C:\InnoSetup"
-                  if ($LASTEXITCODE -ne 0 -or -not (Test-Path 'C:\InnoSetup\ISCC.exe')) {
-                    Write-Host 'Primary installer method failed or ISCC.exe missing; attempting Chocolatey fallback.'
-                    $choco = Get-Command choco.exe -ErrorAction SilentlyContinue
-                    if ($choco) {
-                      choco install innosetup -y --no-progress
-                    } else {
-                      Write-Error 'Failed to install Inno Setup and Chocolatey not available.'
-                    }
-                  }
                   $iscc = 'C:\InnoSetup\ISCC.exe'
-                  if (-not (Test-Path $iscc)) { Write-Error 'ISCC.exe not found after install' }
+                  # Wait briefly for installer to finish writing files (some runners show slight delay)
+                  for ($i=0; $i -lt 30 -and -not (Test-Path $iscc); $i++) { Start-Sleep -Seconds 1 }
+                  if (-not (Test-Path $iscc)) {
+                    Write-Warning 'ISCC.exe not found after primary install attempt; skipping Chocolatey fallback due to network unreliability.'
+                    Write-Error 'Inno Setup compiler not available.'
+                  }
                   & $iscc scripts\installer\windows_installer.iss /DMyAppVersion=${{ env.RELEASE_TAG }}
                   $installer = Get-ChildItem -Filter "ITSE500-Setup-${{ env.RELEASE_TAG }}.exe" | Select-Object -First 1
                   if (-not $installer) { Write-Error 'Installer build failed' } else { Write-Host "Built installer: $($installer.Name)" }
