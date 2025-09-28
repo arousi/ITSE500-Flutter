@@ -20,7 +20,8 @@ OutputBaseFilename=ITSE500-Setup-{#MyAppVersion}
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
-ArchitecturesAllowed=x64
+; Use updated architecture identifiers; x64compatible is generally preferred.
+ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64
 UninstallDisplayIcon={app}\{#MyAppExeName}
 SetupLogging=yes
