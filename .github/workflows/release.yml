@@ -61,8 +61,16 @@ jobs:
             - name: Collect Android artifacts
               run: |
                   mkdir -p dist/android
-                  cp build/app/outputs/bundle/release/*.aab dist/android/
-                  cp build/app/outputs/flutter-apk/app-release.apk dist/android/app-universal-${{ env.RELEASE_TAG }}.apk || true
+                  # Copy and rename AAB
+                  for f in build/app/outputs/bundle/release/*.aab; do
+                    [ -f "$f" ] && cp "$f" "dist/android/app-bundle-${{ env.RELEASE_TAG }}.aab" || true;
+                  done
+                  # Copy and rename universal APK (may not exist if split per-abi)
+                  if [ -f build/app/outputs/flutter-apk/app-release.apk ]; then
+                    cp build/app/outputs/flutter-apk/app-release.apk dist/android/app-universal-${{ env.RELEASE_TAG }}.apk;
+                  else
+                    echo "No universal app-release.apk found (possibly split builds).";
+                  fi
               shell: bash
             - name: Upload Android artifacts
               uses: actions/upload-artifact@v4
@@ -174,6 +182,9 @@ jobs:
               run: |
                   New-Item -ItemType Directory -Force -Path dist\windows | Out-Null
                   Move-Item windows-${{ env.RELEASE_TAG }}.zip dist/windows/
+                  # Copy raw exe for convenience alongside zip
+                  $exe = Get-ChildItem build/windows/x64/runner/Release -Filter *.exe | Select-Object -First 1
+                  if ($exe) { Copy-Item $exe.FullName dist/windows/($exe.BaseName + '-${{ env.RELEASE_TAG }}' + $exe.Extension) }
                   if (Test-Path *.msix) { Move-Item *.msix dist/windows/ }
               shell: pwsh
             - name: Upload Windows artifacts
@@ -272,12 +283,42 @@ jobs:
         runs-on: ubuntu-latest
         needs: [android, web, linux, windows, macos]
         steps:
-            - name: Download all artifacts
+            - name: Download android artifact
               uses: actions/download-artifact@v4
               with:
-                  path: artifacts
+                  name: android
+                  path: artifacts/android
+            - name: Download windows artifact
+              uses: actions/download-artifact@v4
+              with:
+                  name: windows
+                  path: artifacts/windows
+            - name: Download linux artifact
+              uses: actions/download-artifact@v4
+              with:
+                  name: linux
+                  path: artifacts/linux
+            - name: Download web artifact
+              uses: actions/download-artifact@v4
+              with:
+                  name: web
+                  path: artifacts/web
+            - name: Download macos artifact
+              uses: actions/download-artifact@v4
+              with:
+                  name: macos
+                  path: artifacts/macos
             - name: Display downloaded files
-              run: find artifacts -maxdepth 4 -type f -print
+              run: |
+                  echo 'Listing artifacts:'
+                  find artifacts -type f -maxdepth 4 -print
+                  echo '----'
+                  ls -R artifacts || true
+            - name: Fail if no artifacts found
+              run: |
+                  count=$(find artifacts -type f | wc -l)
+                  echo "Found $count files"
+                  if [ "$count" -lt 3 ]; then echo "Expected build artifacts, found too few"; exit 1; fi
             - name: Create Release
               uses: softprops/action-gh-release@v2
               with:
@@ -286,7 +327,11 @@ jobs:
                   draft: false
                   prerelease: false
                   files: |
-                      artifacts/**
+                      artifacts/android/*
+                      artifacts/windows/*
+                      artifacts/linux/*
+                      artifacts/web/*
+                      artifacts/macos/*
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
