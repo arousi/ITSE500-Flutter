@@ -154,10 +154,21 @@ jobs:
                   $runtimeDir = "build/windows/x64/runner/Release"
                   Write-Host "Runtime directory: $runtimeDir"
                   Get-ChildItem $runtimeDir | Select-Object Name,Length | Format-Table | Out-String | Write-Host
-                  $required = @('flutter_windows.dll','icudtl.dat','data')
+                  $required = @('flutter_windows.dll','data')
                   foreach ($r in $required) {
                     if (-not (Test-Path (Join-Path $runtimeDir $r))) { Write-Error "Missing required runtime component: $r" }
                   }
+                  # Handle icudtl.dat which may live under data/ in some layouts; ensure it exists at root for older expectations.
+                  $icuRoot = Join-Path $runtimeDir 'icudtl.dat'
+                  if (-not (Test-Path $icuRoot)) {
+                    $icuFound = Get-ChildItem $runtimeDir -Recurse -Filter icudtl.dat | Select-Object -First 1
+                    if ($icuFound) {
+                      Copy-Item $icuFound.FullName $icuRoot
+                      Write-Host "Copied icudtl.dat from $($icuFound.FullName) to runtime root.";
+                    } else {
+                      Write-Error 'icudtl.dat not found anywhere in runtime directory tree.'
+                    }
+                  } else { Write-Host 'icudtl.dat present at runtime root.' }
                   # Check for any plugin dlls (at least one *_plugin.dll) – warn if none
                   $plugins = Get-ChildItem $runtimeDir -Filter '*_plugin.dll' | Select-Object -First 1
                   if (-not $plugins) { Write-Warning 'No *_plugin.dll files detected. If plugins are expected, verify Windows implementation.' }
