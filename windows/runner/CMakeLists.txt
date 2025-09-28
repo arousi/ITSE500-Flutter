@@ -17,6 +17,12 @@ add_executable(${BINARY_NAME} WIN32
   "${FLUTTER_MANAGED_DIR}/generated_plugin_registrant.cc"
   "Runner.rc"
   "runner.exe.manifest"
+  FILE_SET HEADERS
+    BASE_DIRS "."
+    FILES
+      "flutter_window.h"
+      "utils.h"
+      "win32_window.h"
 )
 
 # Apply the standard set of build settings. This can be removed for applications
