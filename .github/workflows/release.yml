@@ -239,7 +239,26 @@ jobs:
                     Write-Warning 'ISCC.exe not found after primary install attempt; skipping Chocolatey fallback due to network unreliability.'
                     Write-Error 'Inno Setup compiler not available.'
                   }
-                  & $iscc scripts\installer\windows_installer.iss /DMyAppVersion=${{ env.RELEASE_TAG }}
+                  Write-Host "Invoking ISCC to compile installer..."
+                  & $iscc /Qp /DMyAppVersion=${{ env.RELEASE_TAG }} scripts\installer\windows_installer.iss
+                  $exit = $LASTEXITCODE
+                  Write-Host "ISCC exit code: $exit"
+                  if ($exit -ne 0) {
+                    Write-Warning "Primary ISCC invocation with /D define failed; attempting inline script rewrite fallback."
+                    $scriptPath = "scripts/installer/windows_installer.iss"
+                    $content = Get-Content $scriptPath -Raw
+                    if ($content -match '#define MyAppVersion') {
+                      $updated = [Regex]::Replace($content,'#define MyAppVersion "[^"]*"',"#define MyAppVersion \"${{ env.RELEASE_TAG }}\"")
+                      $tempScript = "scripts/installer/windows_installer.effective.iss"
+                      $updated | Set-Content $tempScript -Encoding UTF8
+                      Write-Host "Re-invoking ISCC with modified script ($tempScript)."
+                      & $iscc /Qp $tempScript
+                      $exit = $LASTEXITCODE
+                      if ($exit -ne 0) { Write-Error "ISCC failed again with exit code $exit" }
+                    } else {
+                      Write-Error 'Could not find MyAppVersion define line for fallback replacement.'
+                    }
+                  }
                   # The output file is placed in the script directory (scripts/installer) per OutputDir=.
                   $installer = Get-ChildItem -Recurse -Filter "ITSE500-Setup-${{ env.RELEASE_TAG }}.exe" | Where-Object { $_.FullName -like '*scripts*installer*' } | Select-Object -First 1
                   if (-not $installer) { Write-Error 'Installer build failed (file not found after compile).' } else {
