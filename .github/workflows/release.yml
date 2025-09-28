@@ -173,9 +173,45 @@ jobs:
                   $plugins = Get-ChildItem $runtimeDir -Filter '*_plugin.dll' | Select-Object -First 1
                   if (-not $plugins) { Write-Warning 'No *_plugin.dll files detected. If plugins are expected, verify Windows implementation.' }
               shell: pwsh
+            - name: Prepare Windows bundle (README + manifest)
+              shell: pwsh
+              run: |
+                  $runtimeDir = "build/windows/x64/runner/Release"
+                  @(
+                    'Windows Bundle Instructions',
+                    '===========================',
+                    'Run the application ONLY from within this extracted folder.',
+                    'Do NOT move the .exe out alone; it requires:',
+                    '  - flutter_windows.dll',
+                    '  - icudtl.dat',
+                    '  - data/ directory',
+                    '  - All *_plugin.dll files (plugins)',
+                    '',
+                    "If you see a missing DLL error, you likely extracted only the exe.",
+                    '',
+                    "Version: $env:RELEASE_TAG"
+                  ) | Set-Content -Path (Join-Path $runtimeDir 'README-WINDOWS.txt') -Encoding UTF8
+                  Get-ChildItem $runtimeDir -Filter '*_plugin.dll' | Select-Object -ExpandProperty Name | Set-Content (Join-Path $runtimeDir 'plugin_dlls.txt') -Encoding UTF8
+                  Write-Host 'Generated README-WINDOWS.txt and plugin_dlls.txt'
             - name: Package Windows zip
               run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath windows-${{ env.RELEASE_TAG }}.zip
               shell: pwsh
+            - name: Verify Windows zip contents
+              shell: pwsh
+              run: |
+                  $zip = "windows-${{ env.RELEASE_TAG }}.zip"
+                  $extract = "verify_extract"
+                  if (Test-Path $extract) { Remove-Item $extract -Recurse -Force }
+                  Expand-Archive -Path $zip -DestinationPath $extract
+                  Write-Host 'Extracted zip contents:'
+                  Get-ChildItem $extract | Select-Object Name,Length | Format-Table | Out-String | Write-Host
+                  $manifest = Join-Path $extract 'plugin_dlls.txt'
+                  if (-not (Test-Path $manifest)) { Write-Error 'plugin_dlls.txt missing from zip' }
+                  $dlls = Get-Content $manifest
+                  foreach ($d in $dlls) {
+                    if (-not (Test-Path (Join-Path $extract $d))) { Write-Error "Missing plugin DLL inside zip: $d" }
+                  }
+                  if (-not (Test-Path (Join-Path $extract 'icudtl.dat'))) { Write-Warning 'icudtl.dat not at zip root AFTER packaging (should have been copied). Check runtime integrity.' }
             - name: (Optional) Build MSIX via script if cert present
               env:
                   WINDOWS_CERT_PFX: ${{ secrets.WINDOWS_CERT_PFX }}
