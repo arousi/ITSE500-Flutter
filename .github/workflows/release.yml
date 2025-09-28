@@ -113,6 +113,11 @@ jobs:
         runs-on: windows-latest
         steps:
             - uses: actions/checkout@v4
+            - name: Validate toolchain info (debug)
+              shell: pwsh
+              run: |
+                  Write-Host "Using VS Build Tools version:"; & cl.exe 2>&1 | Select-Object -First 1
+                  Write-Host "Git SHA: $env:GITHUB_SHA"
             - name: Debug list runner sources
               run: |
                   Write-Host 'Listing windows/runner contents:'
@@ -134,6 +139,19 @@ jobs:
             - name: Build Windows
               run: flutter build windows --release
               shell: pwsh
+            - name: Validate Windows runtime bundle
+              run: |
+                  $runtimeDir = "build/windows/x64/runner/Release"
+                  Write-Host "Runtime directory: $runtimeDir"
+                  Get-ChildItem $runtimeDir | Select-Object Name,Length | Format-Table | Out-String | Write-Host
+                  $required = @('flutter_windows.dll','icudtl.dat','data')
+                  foreach ($r in $required) {
+                    if (-not (Test-Path (Join-Path $runtimeDir $r))) { Write-Error "Missing required runtime component: $r" }
+                  }
+                  # Check for any plugin dlls (at least one *_plugin.dll) – warn if none
+                  $plugins = Get-ChildItem $runtimeDir -Filter '*_plugin.dll' | Select-Object -First 1
+                  if (-not $plugins) { Write-Warning 'No *_plugin.dll files detected. If plugins are expected, verify Windows implementation.' }
+              shell: pwsh
             - name: Package Windows zip
               run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath windows-${{ env.RELEASE_TAG }}.zip
               shell: pwsh
@@ -154,15 +172,8 @@ jobs:
             - name: Collect Windows artifacts
               run: |
                   New-Item -ItemType Directory -Force -Path dist\windows | Out-Null
+                  # Keep only the zipped bundle (includes exe + required DLLs) to avoid users running a bare exe without dependencies
                   Move-Item -Path windows-${{ env.RELEASE_TAG }}.zip -Destination dist/windows/
-                  # Locate runner .exe (should match BINARY_NAME) and copy with versioned name
-                  $exe = Get-ChildItem -Path build/windows/x64/runner/Release -Filter *.exe | Select-Object -First 1
-                  if ($exe) {
-                    $versioned = "$($exe.BaseName)-${{ env.RELEASE_TAG }}$($exe.Extension)"
-                    Copy-Item -Path $exe.FullName -Destination (Join-Path dist/windows $versioned)
-                  } else {
-                    Write-Warning 'No Windows .exe found in build output.'
-                  }
                   if (Test-Path *.msix) { Move-Item -Path *.msix -Destination dist/windows/ }
               shell: pwsh
             - name: Upload Windows artifacts
