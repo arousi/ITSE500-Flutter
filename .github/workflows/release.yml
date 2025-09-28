@@ -11,7 +11,7 @@ permissions:
 
 env:
   FLUTTER_CHANNEL: stable
-  FLUTTER_VERSION: latest
+  FLUTTER_VERSION_PIN: 3.24.3
   RELEASE_TAG: ${{ github.ref_name }}
 
 jobs:
@@ -29,7 +29,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: ${{ env.FLUTTER_CHANNEL }}
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+          flutter-version: ${{ env.FLUTTER_VERSION_PIN }}
           cache: true
       - name: Flutter pub get
         run: flutter pub get
@@ -77,7 +77,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: ${{ env.FLUTTER_CHANNEL }}
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+          flutter-version: ${{ env.FLUTTER_VERSION_PIN }}
           cache: true
       - name: Flutter pub get
         run: flutter pub get
@@ -106,7 +106,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: ${{ env.FLUTTER_CHANNEL }}
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+          flutter-version: ${{ env.FLUTTER_VERSION_PIN }}
           cache: true
       - name: Flutter pub get
         run: flutter pub get
@@ -130,7 +130,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: ${{ env.FLUTTER_CHANNEL }}
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+          flutter-version: ${{ env.FLUTTER_VERSION_PIN }}
           cache: true
       - name: Flutter pub get
         run: flutter pub get
@@ -176,7 +176,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: ${{ env.FLUTTER_CHANNEL }}
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+          flutter-version: ${{ env.FLUTTER_VERSION_PIN }}
           cache: true
       - name: Flutter pub get
         run: flutter pub get
@@ -201,7 +201,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: ${{ env.FLUTTER_CHANNEL }}
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+          flutter-version: ${{ env.FLUTTER_VERSION_PIN }}
           cache: true
       - name: Flutter pub get
         run: flutter pub get
