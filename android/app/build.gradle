@@ -9,8 +9,7 @@ android {
     // Single authoritative namespace for the application
     namespace = "com.example.flutter_app_itse500"
     // Updated to API 36 for alignment with production target
-    compileSdk = 36
-    ndkVersion = flutter.ndkVersion
+    compileSdk = 36 // also exposed through ext.flutter.compileSdkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
@@ -26,10 +25,12 @@ android {
         applicationId = "com.example.flutter_app_itse500"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
-    targetSdk = 36
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+        // Use explicit values so legacy plugins depending on ext.flutter still succeed
+        minSdk = rootProject.ext.flutter.minSdkVersion
+        targetSdk = rootProject.ext.flutter.targetSdkVersion
+    // Flutter Gradle plugin still injects these, but if unavailable you can hardcode.
+    versionCode = flutter.versionCode
+    versionName = flutter.versionName
         // Required for OAuth / AppAuth based redirect intent-filters referencing ${appAuthRedirectScheme}
         // Make sure this matches the scheme part of your redirect URI (e.g., com.example.flutter_app_itse500:/oauthredirect)
         manifestPlaceholders = [

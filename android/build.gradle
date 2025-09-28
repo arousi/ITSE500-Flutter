@@ -1,3 +1,22 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        // AGP & Kotlin plugin versions inherited via Flutter Gradle plugin; keep section for legacy plugins.
+        classpath 'com.android.tools.build:gradle:8.2.2'
+        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.22'
+    }
+}
+
+// Provide legacy ext values some plugins (e.g. older file_picker versions) attempt to read.
+ext.flutter = [
+        minSdkVersion    : 21,
+        targetSdkVersion : 36,
+        compileSdkVersion: 36
+]
+
 allprojects {
     repositories {
         google()

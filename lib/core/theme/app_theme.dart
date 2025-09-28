@@ -91,19 +91,6 @@ ThemeData _buildTheme({required bool dark}) {
   );
   return base.copyWith(
     colorScheme: cs,
-    cardTheme: CardThemeData(
-      color: dark ? const Color(0xFF262626) : Colors.white,
-      elevation: 2,
-      shadowColor: Colors.black.withOpacity(dark ? 0.5 : 0.2),
-      surfaceTintColor: Colors.transparent,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: (dark ? Colors.white : Colors.black).withOpacity(0.06),
-        ),
-      ),
-      margin: const EdgeInsets.symmetric(vertical: 6),
-    ),
     appBarTheme: AppBarTheme(
       backgroundColor: palette.appBar,
       foregroundColor: Colors.white,
