@@ -111,15 +111,13 @@ ThemeData _buildTheme({required bool dark}) {
       centerTitle: true,
     ),
     switchTheme: SwitchThemeData(
-      thumbColor: WidgetStateProperty.resolveWith((states) {
-        return states.contains(WidgetState.selected)
-            ? _kPrimary
-            : null; // null -> default neutral
+      thumbColor: MaterialStateProperty.resolveWith((states) {
+        return states.contains(MaterialState.selected) ? _kPrimary : null;
       }),
-      trackColor: WidgetStateProperty.resolveWith((states) {
-        return states.contains(WidgetState.selected)
+      trackColor: MaterialStateProperty.resolveWith((states) {
+        return states.contains(MaterialState.selected)
             ? _kPrimary.withOpacity(0.5)
-            : null; // null -> default neutral
+            : null;
       }),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
