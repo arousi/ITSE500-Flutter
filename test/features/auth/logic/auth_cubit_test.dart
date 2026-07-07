@@ -221,5 +221,29 @@ void main() {
       expect(cubit.state, isA<AuthAuthenticated>());
       await cubit.close();
     });
+
+    test(
+        'seeded biometric_auth_enabled=true in secure storage locks on '
+        'setAuthenticated() instead of going straight to AuthAuthenticated',
+        () async {
+      // Headline Phase-2a change: the biometric flag now lives in secure
+      // storage (flutter_secure_storage), not plaintext SharedPreferences.
+      fakeSecureStorage.store['biometric_auth_enabled'] = 'true';
+      final cubit = AuthCubit();
+      // _loadBiometricFlag() runs asynchronously in the constructor.
+      await Future.delayed(const Duration(milliseconds: 50));
+
+      final states = <AuthState>[];
+      final sub = cubit.stream.listen(states.add);
+
+      cubit.setAuthenticated();
+      await Future.delayed(const Duration(milliseconds: 50));
+
+      expect(states, contains(isA<AuthBiometricLocked>()));
+      expect(cubit.state, isNot(isA<AuthAuthenticated>()));
+
+      await sub.cancel();
+      await cubit.close();
+    });
   });
 }
