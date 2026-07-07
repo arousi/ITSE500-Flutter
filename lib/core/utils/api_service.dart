@@ -14,7 +14,7 @@ import 'package:flutter_app_itse500/core/utils/unified_logger.dart';
 import 'package:flutter_app_itse500/core/utils/structured_logger.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:crypto/crypto.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, visibleForTesting;
 
 import '../models/custom_user.dart';
 // import '../models/visitor_user.dart'; // unused
@@ -156,6 +156,39 @@ class ApiService {
     if (RegExp(r'^192\.168\.\d{1,3}\.\d{1,3}$').hasMatch(h)) return true;
     return false;
   }
+
+  // Known production hosts that must never be reached over plaintext HTTP.
+  // Deliberately narrower than _isBackendHostName: it must NOT include
+  // localhost/127.0.0.1/LAN/emulator hosts (dev) or third-party providers
+  // (LM Studio, OpenAI, etc.) which are allowed to stay on whatever scheme
+  // they were configured with.
+  static bool _isKnownProdHost(String host) {
+    final h = host.toLowerCase();
+    return h == 'www.itse500-ok.ly' || h == 'itse500-ok.ly';
+  }
+
+  /// Upgrades a candidate request URL string to HTTPS if it targets a known
+  /// production host but was somehow built with a plain http:// scheme
+  /// (e.g. a caller passed an absolute URL directly, bypassing
+  /// [_normalizeApiBase]). Leaves every other URL (dev hosts, LAN, LM
+  /// Studio, third-party providers) untouched.
+  static String _enforceHttpsForKnownProdHosts(String urlString) {
+    if (!urlString.startsWith('http://')) return urlString;
+    try {
+      final u = Uri.parse(urlString);
+      if (_isKnownProdHost(u.host)) {
+        return u.replace(scheme: 'https').toString();
+      }
+    } catch (_) {}
+    return urlString;
+  }
+
+  @visibleForTesting
+  static String enforceHttpsForKnownProdHostsForTest(String urlString) =>
+      _enforceHttpsForKnownProdHosts(urlString);
+
+  @visibleForTesting
+  static String normalizeApiBaseForTest(String v) => _normalizeApiBase(v);
 
   /// Checks OpenAI key using GET /models (preferred lightweight validation)
   Future<bool> checkOpenAiKey(String apiKey) async {
@@ -1451,7 +1484,11 @@ class ApiService {
     // Deduplicate while preserving order to avoid redundant attempts
     final seen = <String>{};
     final urls =
-        candidateStrings.where((s) => seen.add(s)).map(Uri.parse).toList();
+        candidateStrings
+            .map(_enforceHttpsForKnownProdHosts)
+            .where((s) => seen.add(s))
+            .map(Uri.parse)
+            .toList();
     _logger.i(
         'Trying POST endpoints for $endpointOrUrl: ${urls.map((u) => u.toString()).join(", ")}');
 
@@ -1624,7 +1661,11 @@ class ApiService {
 
     final seen = <String>{};
     final urls =
-        candidateStrings.where((s) => seen.add(s)).map(Uri.parse).toList();
+        candidateStrings
+            .map(_enforceHttpsForKnownProdHosts)
+            .where((s) => seen.add(s))
+            .map(Uri.parse)
+            .toList();
     _logger.i(
         'Trying GET endpoints for $endpointOrUrl: ${urls.map((u) => u.toString()).join(", ")}');
     http.Response? first401;
@@ -1799,7 +1840,11 @@ class ApiService {
 
     final seen = <String>{};
     final urls =
-        candidateStrings.where((s) => seen.add(s)).map(Uri.parse).toList();
+        candidateStrings
+            .map(_enforceHttpsForKnownProdHosts)
+            .where((s) => seen.add(s))
+            .map(Uri.parse)
+            .toList();
     _logger.i(
         'Trying PATCH endpoints for $endpointOrUrl: ${urls.map((u) => u.toString()).join(", ")}');
     for (final url in urls) {
@@ -1970,7 +2015,11 @@ class ApiService {
 
     final seen = <String>{};
     final urls =
-        candidateStrings.where((s) => seen.add(s)).map(Uri.parse).toList();
+        candidateStrings
+            .map(_enforceHttpsForKnownProdHosts)
+            .where((s) => seen.add(s))
+            .map(Uri.parse)
+            .toList();
     _logger.i(
         'Trying DELETE endpoints for $endpointOrUrl: ${urls.map((u) => u.toString()).join(", ")}');
     http.Response? first401;
