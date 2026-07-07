@@ -1,5 +1,7 @@
 # flutter_app_itse500
 
+[![CI](https://github.com/arousi/ITSE500-Flutter/actions/workflows/ci.yml/badge.svg)](https://github.com/arousi/ITSE500-Flutter/actions/workflows/ci.yml)
+
 A new Flutter project.
 
 ## Getting Started

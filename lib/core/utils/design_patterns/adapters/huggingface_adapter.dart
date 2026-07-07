@@ -97,20 +97,23 @@ class HuggingFaceAdapter implements ProviderAdapter {
       content = json['generated_text'];
     } else if (content.isEmpty && json['outputs'] is List) {
       final first = (json['outputs'] as List).firstOrNull;
-      if (first is Map && first['generated_text'] is String)
+      if (first is Map && first['generated_text'] is String) {
         content = first['generated_text'];
+      }
     } else if (content.isEmpty && json['data'] is List) {
       final first = (json['data'] as List).firstOrNull;
-      if (first is Map && first['generated_text'] is String)
+      if (first is Map && first['generated_text'] is String) {
         content = first['generated_text'];
+      }
     }
     if (content.isEmpty && json['raw'] is String) {
       try {
         final parsed = jsonDecode(json['raw']);
         if (parsed is List && parsed.isNotEmpty) {
           final first = parsed.first;
-          if (first is Map && first['generated_text'] is String)
+          if (first is Map && first['generated_text'] is String) {
             content = first['generated_text'];
+          }
         }
       } catch (_) {}
     }
@@ -215,8 +218,9 @@ class HuggingFaceAdapter implements ProviderAdapter {
 
     String extractText(dynamic decoded) {
       if (decoded is Map) {
-        if (decoded['generated_text'] is String)
+        if (decoded['generated_text'] is String) {
           return decoded['generated_text'] as String;
+        }
         // Some experimental endpoints wrap output under choices
         if (decoded['choices'] is List &&
             (decoded['choices'] as List).isNotEmpty) {
@@ -225,10 +229,12 @@ class HuggingFaceAdapter implements ProviderAdapter {
         }
       } else if (decoded is List && decoded.isNotEmpty) {
         final first = decoded.first;
-        if (first is Map && first['generated_text'] is String)
+        if (first is Map && first['generated_text'] is String) {
           return first['generated_text'] as String;
-        if (first is Map && first['text'] is String)
+        }
+        if (first is Map && first['text'] is String) {
           return first['text'] as String;
+        }
       }
       return '';
     }
@@ -245,13 +251,15 @@ class HuggingFaceAdapter implements ProviderAdapter {
           if (!text.startsWith(accumulated)) {
             final delta = text;
             accumulated = text;
-            if (delta.isNotEmpty)
+            if (delta.isNotEmpty) {
               yield ProviderChunk(deltaText: delta, index: idx++);
+            }
           } else {
             final delta = text.substring(accumulated.length);
             accumulated = text;
-            if (delta.isNotEmpty)
+            if (delta.isNotEmpty) {
               yield ProviderChunk(deltaText: delta, index: idx++);
+            }
           }
         }
       } catch (_) {

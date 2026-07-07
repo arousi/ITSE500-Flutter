@@ -172,19 +172,22 @@ class GeminiAdapter implements ProviderAdapter {
           Map<String, dynamic>? inline = () {
             final snake = p['inline_data'];
             final camel = p['inlineData'];
-            if (snake is Map<String, dynamic>)
+            if (snake is Map<String, dynamic>) {
               return Map<String, dynamic>.from(snake);
-            if (camel is Map<String, dynamic>)
+            }
+            if (camel is Map<String, dynamic>) {
               return Map<String, dynamic>.from(camel);
+            }
             return null;
           }();
           if (inline != null) {
             // Some preview responses appear to nest another inlineData object (wrapper) – unwrap if present
             if (!inline.containsKey('data') && inline['inlineData'] is Map) {
               final nested = inline['inlineData'];
-              if (nested is Map)
+              if (nested is Map) {
                 inline = Map<String, dynamic>.from(
                     nested.map((k, v) => MapEntry(k.toString(), v)));
+              }
             }
             final mime =
                 (inline['mime_type'] ?? inline['mimeType'])?.toString() ??

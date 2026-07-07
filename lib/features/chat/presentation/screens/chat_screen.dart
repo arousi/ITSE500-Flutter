@@ -202,20 +202,22 @@ class _ChatScreenState extends State<ChatScreen> {
     });
     if (_apiKey == null || _apiKey!.isEmpty) {
       // Don’t force a model when no key; let user pick from dropdown if available
-      if (mounted)
+      if (mounted) {
         setState(() {
           _selectedModel = _selectedModel;
         });
+      }
       return;
     }
     final selected =
         chatCubit.selectedProviderLLMs[provider] ?? const <String>[];
     // Only default a model if none is selected yet
     if (_selectedModel == null || _selectedProvider != provider) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _selectedModel = selected.isNotEmpty ? selected.first : null;
         });
+      }
     }
   }
 

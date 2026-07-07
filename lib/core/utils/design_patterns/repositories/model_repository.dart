@@ -42,8 +42,9 @@ class ModelRepository {
       final enriched = models.map((m) {
         if (m.promptPrice != null || m.completionPrice != null) return m;
         final entry = ManualPricingLoader.I.lookup(m.provider, m.id);
-        if (entry == null || (entry.prompt == null && entry.completion == null))
+        if (entry == null || (entry.prompt == null && entry.completion == null)) {
           return m;
+        }
         return ModelDescriptor(
           provider: m.provider,
           id: m.id,

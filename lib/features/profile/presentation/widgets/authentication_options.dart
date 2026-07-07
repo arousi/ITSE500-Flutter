@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../auth/logic/auth_cubit.dart';
 import '../../../auth/logic/auth_providers.dart';
@@ -25,6 +26,7 @@ class _AuthenticationOptionsState extends State<AuthenticationOptions> {
   bool biometricSupported = true;
   final BiometricAuthService _biometricService = BiometricAuthService();
   final Set<String> _loading = {};
+  static const _secureStorage = FlutterSecureStorage();
 
   @override
   void initState() {
@@ -35,13 +37,15 @@ class _AuthenticationOptionsState extends State<AuthenticationOptions> {
   Future<void> _loadAuthOptions() async {
     final prefs = await SharedPreferences.getInstance();
     final supported = await _biometricService.canCheck();
+    final biometricRaw =
+        await _secureStorage.read(key: 'biometric_auth_enabled');
     setState(() {
       // Default OFF: user must enable and complete OAuth successfully.
       googleEnabled = prefs.getBool('google_auth_enabled') ?? false;
       msAuthEnabled = prefs.getBool('ms_auth_enabled') ?? false;
       openRouterEnabled = prefs.getBool('openrouter_auth_enabled') ?? false;
-      biometricEnabled = prefs.getBool('biometric_auth_enabled') ??
-          false; // Biometric must be explicitly enabled.
+      biometricEnabled =
+          biometricRaw == 'true'; // Biometric must be explicitly enabled.
       biometricSupported = supported;
     });
   }
@@ -138,10 +142,12 @@ class _AuthenticationOptionsState extends State<AuthenticationOptions> {
       _loading.remove('biometric');
     });
     if (success) {
-      await _saveAuthOption('biometric_auth_enabled', value);
+      await _secureStorage.write(
+          key: 'biometric_auth_enabled', value: value ? 'true' : 'false');
       // Inform AuthCubit about preference change.
-      if (mounted)
+      if (mounted) {
         context.read<AuthCubit>().applyBiometricPreferenceChanged(value);
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('Biometric auth failed or unavailable')));
@@ -185,27 +191,30 @@ class _AuthenticationOptionsState extends State<AuthenticationOptions> {
               _loading.remove('google');
             });
             await _saveAuthOption('google_auth_enabled', false);
-            if (mounted)
+            if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Google sign-in failed')));
+            }
           } else if (state.provider == 'microsoft') {
             setState(() {
               msAuthEnabled = false;
               _loading.remove('ms');
             });
             await _saveAuthOption('ms_auth_enabled', false);
-            if (mounted)
+            if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Microsoft sign-in failed')));
+            }
           } else if (state.provider == 'openrouter') {
             setState(() {
               openRouterEnabled = false;
               _loading.remove('openrouter');
             });
             await _saveAuthOption('openrouter_auth_enabled', false);
-            if (mounted)
+            if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('OpenRouter sign-in failed')));
+            }
           }
         } else if (state is AuthAuthenticated) {
           // After auth state settles, re-load flags from SharedPreferences in case listener missed success

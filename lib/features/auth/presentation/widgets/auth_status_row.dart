@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthStatusRow extends StatefulWidget {
@@ -23,11 +24,14 @@ class _AuthStatusRowState extends State<AuthStatusRow> {
 
   Future<void> _load() async {
     final p = await SharedPreferences.getInstance();
+    const secureStorage = FlutterSecureStorage();
+    final biometricRaw =
+        await secureStorage.read(key: 'biometric_auth_enabled');
     if (!mounted) return;
     setState(() {
       _google = p.getBool('google_auth_enabled') ?? false;
       _ms = p.getBool('ms_auth_enabled') ?? false;
-      _biometric = p.getBool('biometric_auth_enabled') ?? false;
+      _biometric = biometricRaw == 'true';
       _openRouter = p.getBool('openrouter_auth_enabled') ?? false; // reserved
     });
   }
