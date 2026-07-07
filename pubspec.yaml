@@ -19,7 +19,12 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0
 
 environment:
-  sdk: ^3.5.3
+  # Bumped from ^3.5.3: json_serializable (used by the generated OpenAPI
+  # client's build_runner step) emits null-aware-element map syntax that
+  # requires language version 3.9+. The installed toolchain (Dart 3.12.2 /
+  # Flutter 3.44.5) already satisfies this; this only raises the declared
+  # minimum, it does not change any existing source.
+  sdk: ^3.9.0
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -98,6 +103,10 @@ dependencies:
   get_it: ^9.2.1
   pinput: ^6.0.2
 
+  # Runtime deps for the generated OpenAPI client (lib/api/generated/).
+  json_annotation: ^4.9.0
+  chopper: ^8.6.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -112,6 +121,15 @@ dev_dependencies:
   bloc_test: ^10.0.0
   mocktail: ^1.0.4
   yaml: ^3.1.2
+
+  # OpenAPI-driven typed client codegen (Phase D of the 3-repo contract
+  # sync). Pure-Dart generator: the Java-based openapi-generator is not
+  # usable here because the machine's Java is 1.8 (too old). Reads
+  # openapi/schema.yaml and emits lib/api/generated/** per build.yaml.
+  swagger_dart_code_generator: ^4.1.1
+  build_runner: ^2.10.1
+  json_serializable: ^6.11.1
+  chopper_generator: ^8.6.2
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
