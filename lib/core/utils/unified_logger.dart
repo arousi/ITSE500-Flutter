@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:logger/logger.dart' as rt;
 
 import 'structured_logger.dart';
@@ -23,28 +24,86 @@ class UnifiedLogger {
 
   final rt.Logger _console;
 
+  static const _sensitiveKeys = {
+    'authorization',
+    'api_key',
+    'api-key',
+    'x-api-key',
+    'x-goog-api-key',
+    'openai-api-key',
+    'openrouter-api-key',
+    'access_token',
+    'refresh_token',
+  };
+
+  // Matches "Bearer <token>" (case-insensitive) and common raw provider API
+  // key prefixes (OpenAI/OpenRouter "sk-...", Google "AIza...") so secrets
+  // interpolated directly into a log message string are still scrubbed
+  // before hitting the console, not just structured map payloads.
+  static final RegExp _bearerPattern =
+      RegExp(r'Bearer\s+\S+', caseSensitive: false);
+  static final RegExp _rawKeyPattern =
+      RegExp(r'\b(sk-[A-Za-z0-9_-]{6,}|AIza[A-Za-z0-9_-]{10,})\b');
+
+  @visibleForTesting
+  String redactStringForTest(String input) => _redactString(input);
+
+  @visibleForTesting
+  Map<String, dynamic> redactCtxForTest(Map<String, dynamic> ctx) =>
+      _redactCtx(ctx);
+
+  String _redactString(String input) {
+    return input
+        .replaceAll(_bearerPattern, 'Bearer ***')
+        .replaceAll(_rawKeyPattern, '***');
+  }
+
+  Map<String, dynamic> _redactCtx(Map<String, dynamic> ctx) {
+    final out = <String, dynamic>{};
+    ctx.forEach((k, v) {
+      if (_sensitiveKeys.contains(k.toLowerCase())) {
+        out[k] = '***';
+      } else if (v is Map<String, dynamic>) {
+        out[k] = _redactCtx(v);
+      } else if (v is String) {
+        out[k] = _redactString(v);
+      } else {
+        out[k] = v;
+      }
+    });
+    return out;
+  }
+
   // Convenience severity methods -------------------------------------------------
   Future<void> d(String message,
       {Object? error, StackTrace? stack, Map<String, dynamic>? ctx}) async {
-    _console.d(message, error: error, stackTrace: stack);
-    await _file('debug', message, error: error, stack: stack, ctx: ctx);
+    final safeMessage = _redactString(message);
+    final safeCtx = ctx != null ? _redactCtx(ctx) : null;
+    _console.d(safeMessage, error: error, stackTrace: stack);
+    await _file('debug', safeMessage, error: error, stack: stack, ctx: safeCtx);
   }
 
   Future<void> i(String message, {Map<String, dynamic>? ctx}) async {
-    _console.i(message);
-    await _file('info', message, ctx: ctx);
+    final safeMessage = _redactString(message);
+    final safeCtx = ctx != null ? _redactCtx(ctx) : null;
+    _console.i(safeMessage);
+    await _file('info', safeMessage, ctx: safeCtx);
   }
 
   Future<void> w(String message,
       {Object? error, StackTrace? stack, Map<String, dynamic>? ctx}) async {
-    _console.w(message, error: error, stackTrace: stack);
-    await _file('warn', message, error: error, stack: stack, ctx: ctx);
+    final safeMessage = _redactString(message);
+    final safeCtx = ctx != null ? _redactCtx(ctx) : null;
+    _console.w(safeMessage, error: error, stackTrace: stack);
+    await _file('warn', safeMessage, error: error, stack: stack, ctx: safeCtx);
   }
 
   Future<void> e(String message,
       {Object? error, StackTrace? stack, Map<String, dynamic>? ctx}) async {
-    _console.e(message, error: error, stackTrace: stack);
-    await _file('error', message, error: error, stack: stack, ctx: ctx);
+    final safeMessage = _redactString(message);
+    final safeCtx = ctx != null ? _redactCtx(ctx) : null;
+    _console.e(safeMessage, error: error, stackTrace: stack);
+    await _file('error', safeMessage, error: error, stack: stack, ctx: safeCtx);
   }
 
   /// Structured event logging. Appears in both console and JSONL with metadata.
