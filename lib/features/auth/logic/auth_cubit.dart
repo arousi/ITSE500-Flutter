@@ -554,7 +554,7 @@ class AuthCubit extends Cubit<AuthState> {
         await prefs.remove('google_auth_enabled');
         await prefs.remove('ms_auth_enabled');
         await prefs.remove('openrouter_auth_enabled');
-        await prefs.remove('biometric_auth_enabled');
+        await secureStorage.delete(key: 'biometric_auth_enabled');
       } catch (_) {}
       // Also clear any cached manual hotspot host from repository secure storage key
       // (Repository method keeps in-memory cache; we intentionally do not clear that to allow re-login session decisions)
@@ -570,7 +570,7 @@ class AuthCubit extends Cubit<AuthState> {
         await prefs.remove('google_auth_enabled');
         await prefs.remove('ms_auth_enabled');
         await prefs.remove('openrouter_auth_enabled');
-        await prefs.remove('biometric_auth_enabled');
+        await secureStorage.delete(key: 'biometric_auth_enabled');
       } catch (_) {}
       emit(AuthInitial());
     }
@@ -595,7 +595,7 @@ class AuthCubit extends Cubit<AuthState> {
         await prefs.remove('google_auth_enabled');
         await prefs.remove('ms_auth_enabled');
         await prefs.remove('openrouter_auth_enabled');
-        await prefs.remove('biometric_auth_enabled');
+        await secureStorage.delete(key: 'biometric_auth_enabled');
       } catch (_) {}
       // Purge local DB (users, conversations, messages, oauth tables)
       await dataRepo.deleteAllLocalData();
@@ -673,8 +673,8 @@ class AuthCubit extends Cubit<AuthState> {
   // ------------------ Biometric Foreground Lock ------------------
   Future<void> _loadBiometricFlag() async {
     try {
-      _biometricEnabled =
-          await prefs.getBool('biometric_auth_enabled') ?? false;
+      final raw = await secureStorage.read(key: 'biometric_auth_enabled');
+      _biometricEnabled = raw == 'true';
     } catch (_) {
       _biometricEnabled = false;
     }

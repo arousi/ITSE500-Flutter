@@ -3,7 +3,6 @@ import 'package:djangoflow_oauth/djangoflow_oauth.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:local_auth/local_auth.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 /// Generic OAuth Provider definitions (Google, Microsoft, Django)
 class StaticOAuthProvider implements OAuthProvider {
@@ -128,6 +127,8 @@ class OAuthUnifiedService {
 
 class BiometricAuthService {
   final LocalAuthentication _auth = LocalAuthentication();
+  static const _storage = FlutterSecureStorage();
+  static const _biometricFlagKey = 'biometric_auth_enabled';
 
   Future<bool> canCheck() async {
     try {
@@ -153,8 +154,7 @@ class BiometricAuthService {
         persistAcrossBackgrounding: true,
       );
       if (ok) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setBool('biometric_auth_enabled', true);
+        await _storage.write(key: _biometricFlagKey, value: 'true');
       }
       return ok;
     } catch (_) {
@@ -163,7 +163,6 @@ class BiometricAuthService {
   }
 
   Future<void> disable() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('biometric_auth_enabled', false);
+    await _storage.write(key: _biometricFlagKey, value: 'false');
   }
 }

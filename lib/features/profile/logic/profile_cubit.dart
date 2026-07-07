@@ -511,7 +511,7 @@ class ProfileCubit extends Cubit<ProfileState> {
         await _prefs.remove('google_auth_enabled');
         await _prefs.remove('ms_auth_enabled');
         await _prefs.remove('openrouter_auth_enabled');
-        await _prefs.remove('biometric_auth_enabled');
+        await secureStorage.delete(key: 'biometric_auth_enabled');
       } catch (_) {}
       // Purge local DB so next user starts clean
       try {
@@ -577,7 +577,7 @@ class ProfileCubit extends Cubit<ProfileState> {
         await _prefs.remove('google_auth_enabled');
         await _prefs.remove('ms_auth_enabled');
         await _prefs.remove('openrouter_auth_enabled');
-        await _prefs.remove('biometric_auth_enabled');
+        await secureStorage.delete(key: 'biometric_auth_enabled');
       } catch (_) {}
       try {
         await dataRepo.deleteAllLocalData();
