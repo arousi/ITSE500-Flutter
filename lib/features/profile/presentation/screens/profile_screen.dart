@@ -533,8 +533,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           listener: (ctx, aState) async {
                             if (aState is AuthRegistrationNoEmailVerification) {
                               Navigator.of(ctx).pop();
-                              if (mounted)
+                              if (mounted) {
                                 context.read<ProfileCubit>().loadProfile();
+                              }
                             }
                           },
                           child: Dialog(
@@ -556,14 +557,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
             );
           } else if (state is ProfileUnverified) {
             // Unverified: show data but disable edits
-            if (usernameController.text != state.username)
+            if (usernameController.text != state.username) {
               usernameController.text = state.username;
-            if (emailController.text != state.email)
+            }
+            if (emailController.text != state.email) {
               emailController.text = state.email;
-            if (phoneController.text != state.phoneNumber)
+            }
+            if (phoneController.text != state.phoneNumber) {
               phoneController.text = state.phoneNumber;
-            if (serverUuidController.text != state.userId)
+            }
+            if (serverUuidController.text != state.userId) {
               serverUuidController.text = state.userId;
+            }
             mainProfileSection = Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

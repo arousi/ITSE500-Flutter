@@ -145,8 +145,9 @@ class _ProviderModelsScreenState extends State<ProviderModelsScreen> {
                     if (_search.isNotEmpty) {
                       final s = _search.toLowerCase();
                       if (!d.id.toLowerCase().contains(s) &&
-                          !d.displayName.toLowerCase().contains(s))
+                          !d.displayName.toLowerCase().contains(s)) {
                         return false;
+                      }
                     }
                     final isChat = d.isChat;
                     final isEmb = d.isEmbedding;
@@ -312,8 +313,9 @@ class _ProviderModelsScreenState extends State<ProviderModelsScreen> {
   }) {
     if (loading) return const Center(child: CircularProgressIndicator());
     if (error != null) return Center(child: Text('Error: $error'));
-    if (empty)
+    if (empty) {
       return const Center(child: Text('No models data. Fetch models first.'));
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

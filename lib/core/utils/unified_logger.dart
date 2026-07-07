@@ -1,7 +1,9 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:logger/logger.dart' as rt;
 
+import 'log_redaction.dart';
 import 'structured_logger.dart';
 
 /// Unified logger that mirrors logs to runtime console and structured JSONL files.
@@ -23,28 +25,77 @@ class UnifiedLogger {
 
   final rt.Logger _console;
 
+  @visibleForTesting
+  String redactStringForTest(String input) => _redactString(input);
+
+  @visibleForTesting
+  Map<String, dynamic> redactCtxForTest(Map<String, dynamic> ctx) =>
+      _redactCtx(ctx);
+
+  String _redactString(String input) => LogRedaction.redactString(input);
+
+  Map<String, dynamic> _redactCtx(Map<String, dynamic> ctx) =>
+      LogRedaction.redactMap(ctx);
+
+  /// Redacts an [error] object before it reaches the console printer or the
+  /// JSONL file. The `logger` package's pretty printer calls `.toString()`
+  /// on the raw error object internally, so passing it through unredacted
+  /// would leak a token embedded in an exception message even though the
+  /// log *message* string was already scrubbed. Returns `null` for a null
+  /// input, otherwise a plain redacted string standing in for the error.
+  Object? _redactError(Object? error) {
+    if (error == null) return null;
+    return _redactString(error.toString());
+  }
+
+  /// Redacts a [stack] trace's string form. Stack traces are usually just
+  /// file/line data, but treat them the same as any other free-form string
+  /// on the (rare) chance a token ended up embedded via string
+  /// interpolation in a rethrow.
+  String? _redactStack(StackTrace? stack) {
+    if (stack == null) return null;
+    return _redactString(stack.toString());
+  }
+
   // Convenience severity methods -------------------------------------------------
   Future<void> d(String message,
       {Object? error, StackTrace? stack, Map<String, dynamic>? ctx}) async {
-    _console.d(message, error: error, stackTrace: stack);
-    await _file('debug', message, error: error, stack: stack, ctx: ctx);
+    final safeMessage = _redactString(message);
+    final safeCtx = ctx != null ? _redactCtx(ctx) : null;
+    final safeError = _redactError(error);
+    final safeStack = _redactStack(stack);
+    _console.d(safeMessage, error: safeError);
+    await _file('debug', safeMessage,
+        error: safeError, stack: safeStack, ctx: safeCtx);
   }
 
   Future<void> i(String message, {Map<String, dynamic>? ctx}) async {
-    _console.i(message);
-    await _file('info', message, ctx: ctx);
+    final safeMessage = _redactString(message);
+    final safeCtx = ctx != null ? _redactCtx(ctx) : null;
+    _console.i(safeMessage);
+    await _file('info', safeMessage, ctx: safeCtx);
   }
 
   Future<void> w(String message,
       {Object? error, StackTrace? stack, Map<String, dynamic>? ctx}) async {
-    _console.w(message, error: error, stackTrace: stack);
-    await _file('warn', message, error: error, stack: stack, ctx: ctx);
+    final safeMessage = _redactString(message);
+    final safeCtx = ctx != null ? _redactCtx(ctx) : null;
+    final safeError = _redactError(error);
+    final safeStack = _redactStack(stack);
+    _console.w(safeMessage, error: safeError);
+    await _file('warn', safeMessage,
+        error: safeError, stack: safeStack, ctx: safeCtx);
   }
 
   Future<void> e(String message,
       {Object? error, StackTrace? stack, Map<String, dynamic>? ctx}) async {
-    _console.e(message, error: error, stackTrace: stack);
-    await _file('error', message, error: error, stack: stack, ctx: ctx);
+    final safeMessage = _redactString(message);
+    final safeCtx = ctx != null ? _redactCtx(ctx) : null;
+    final safeError = _redactError(error);
+    final safeStack = _redactStack(stack);
+    _console.e(safeMessage, error: safeError);
+    await _file('error', safeMessage,
+        error: safeError, stack: safeStack, ctx: safeCtx);
   }
 
   /// Structured event logging. Appears in both console and JSONL with metadata.
@@ -93,14 +144,16 @@ class UnifiedLogger {
     return StructuredLogger.instance.cleanOldLogs(retainDays: retainDays);
   }
 
-  // Internal helper to write to structured log
+  // Internal helper to write to structured log. [error] and [stack] must
+  // already be redacted strings by the time they reach here (see
+  // _redactError/_redactStack) — this only assembles the JSONL payload.
   Future<void> _file(String level, String message,
-      {Object? error, StackTrace? stack, Map<String, dynamic>? ctx}) {
+      {Object? error, String? stack, Map<String, dynamic>? ctx}) {
     final payload = {
       'level': level,
       'message': message,
       if (error != null) 'error': error.toString(),
-      if (stack != null) 'stack': stack.toString(),
+      if (stack != null) 'stack': stack,
       if (ctx != null) ...ctx,
     };
     return StructuredLogger.instance.log(

@@ -1,6 +1,6 @@
 part of '../provider_config_block.dart';
 
-class ConnectionField extends StatelessWidget {
+class ConnectionField extends StatefulWidget {
   final String displayName;
   final String providerKey;
   final bool enabled;
@@ -37,7 +37,31 @@ class ConnectionField extends StatelessWidget {
   });
 
   @override
+  State<ConnectionField> createState() => _ConnectionFieldState();
+}
+
+class _ConnectionFieldState extends State<ConnectionField> {
+  // API key fields start obscured; the user must explicitly reveal them.
+  // Kept per-widget (not persisted) so the key is masked again on rebuild
+  // (e.g. navigating away and back) rather than staying revealed forever.
+  bool _revealed = false;
+
+  @override
   Widget build(BuildContext context) {
+    final displayName = widget.displayName;
+    final enabled = widget.enabled;
+    final statusColor = widget.statusColor;
+    final statusText = widget.statusText;
+    final controller = widget.controller;
+    final usesApiKey = widget.usesApiKey;
+    final isEditable = widget.isEditable;
+    final checking = widget.checking;
+    final connected = widget.connected;
+    final fieldLabel = widget.fieldLabel;
+    final docsUrl = widget.docsUrl;
+    final onToggleEnabled = widget.onToggleEnabled;
+    final onChanged = widget.onChanged;
+    final onFieldSubmitted = widget.onFieldSubmitted;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -72,7 +96,7 @@ class ConnectionField extends StatelessWidget {
                     TextFormField(
                       controller: controller,
                       enabled: isEditable && enabled,
-                      obscureText: usesApiKey,
+                      obscureText: usesApiKey && !_revealed,
                       decoration: InputDecoration(
                         labelText: fieldLabel,
                         border: const OutlineInputBorder(),
@@ -85,17 +109,53 @@ class ConnectionField extends StatelessWidget {
                                     child: CircularProgressIndicator(
                                         strokeWidth: 2)),
                               )
-                            : Icon(
-                                connected
-                                    ? Icons.lock_open
-                                    : Icons.lock_outline,
-                                color: statusColor,
-                                size: 18),
+                            : Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (usesApiKey)
+                                    IconButton(
+                                      tooltip:
+                                          _revealed ? 'Hide key' : 'Show key',
+                                      icon: Icon(
+                                        _revealed
+                                            ? Icons.visibility_off
+                                            : Icons.visibility,
+                                        size: 18,
+                                      ),
+                                      onPressed: () => setState(
+                                          () => _revealed = !_revealed),
+                                    ),
+                                  Padding(
+                                    padding:
+                                        const EdgeInsets.only(right: 12),
+                                    child: Icon(
+                                      connected
+                                          ? Icons.lock_open
+                                          : Icons.lock_outline,
+                                      color: statusColor,
+                                      size: 18,
+                                    ),
+                                  ),
+                                ],
+                              ),
                       ),
                       onChanged: onChanged,
-                      onFieldSubmitted: (_) => onFieldSubmitted(),
+                      onFieldSubmitted: (_) {
+                        // Re-mask the key once it has been submitted/saved so
+                        // the plaintext value isn't left visible on screen
+                        // longer than necessary.
+                        if (usesApiKey && _revealed) {
+                          setState(() => _revealed = false);
+                        }
+                        onFieldSubmitted();
+                      },
                       onEditingComplete: onFieldSubmitted,
-                      onTapOutside: (_) => onFieldSubmitted(),
+                      onTapOutside: (_) {
+                        if (usesApiKey && _revealed) {
+                          setState(() => _revealed = false);
+                        }
+                        onFieldSubmitted();
+                      },
                     ),
                   ],
                 )
