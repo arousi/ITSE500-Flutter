@@ -1,0 +1,32 @@
+targets:
+  $default:
+    sources:
+      - lib/**
+      - openapi/**
+      - $package$
+    builders:
+      chopper_generator:
+        options:
+          header: "// GENERATED CODE - DO NOT MODIFY BY HAND"
+
+      swagger_dart_code_generator:
+        options:
+          input_folder: "openapi/"
+          output_folder: "lib/api/generated/"
+          with_base_url: true
+          with_converter: true
+          use_path_for_request_names: true
+          build_only_models: false
+          separate_models: true
+          use_required_attribute_for_headers: false
+          ignore_headers: false
+          include_if_null: false
+          override_equals_and_hashcode: true
+          # This is a drf-spectacular-produced schema serving auth, chat, and
+          # user-management endpoints. The multipart attachments endpoint
+          # uses a oneOf/discriminator-heavy request body shape the
+          # generator cannot model cleanly yet; excluded so the rest of the
+          # contract (models + all other requests) generates cleanly. See
+          # openapi/README.md for how to re-sync this file.
+          exclude_paths:
+            - "/api/v1/chat_api/conversations/\\{conversation_id\\}/messages/\\{message_id\\}/attachments/"
