@@ -111,7 +111,7 @@ app.*.map.json
 .flutter-versions
 .flutter-setup
 .melos_tool/
-pubspec.lock
+# pubspec.lock is intentionally COMMITTED for reproducible app builds (do not ignore).
 # Removed overly broad patterns that prevented committing essential source/header files
 # *.cmake
 # *.h
@@ -156,6 +156,7 @@ pubspec.lock
 *.tmp
 *.swp
 *.lock
+!pubspec.lock
 *.orig
 *.rej
 .DS_Store

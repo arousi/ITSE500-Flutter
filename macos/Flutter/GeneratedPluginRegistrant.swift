@@ -51,7 +51,7 @@ func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
   FlutterWebAuth2Plugin.register(with: registry.registrar(forPlugin: "FlutterWebAuth2Plugin"))
   FLTGoogleSignInPlugin.register(with: registry.registrar(forPlugin: "FLTGoogleSignInPlugin"))
   HotkeyManagerMacosPlugin.register(with: registry.registrar(forPlugin: "HotkeyManagerMacosPlugin"))
-  FLALocalAuthPlugin.register(with: registry.registrar(forPlugin: "FLALocalAuthPlugin"))
+  LocalAuthPlugin.register(with: registry.registrar(forPlugin: "LocalAuthPlugin"))
   LocalNotifierPlugin.register(with: registry.registrar(forPlugin: "LocalNotifierPlugin"))
   PathProviderPlugin.register(with: registry.registrar(forPlugin: "PathProviderPlugin"))
   PrintingPlugin.register(with: registry.registrar(forPlugin: "PrintingPlugin"))
