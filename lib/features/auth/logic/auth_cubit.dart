@@ -185,10 +185,12 @@ class AuthCubit extends Cubit<AuthState> {
       final refreshToken = payload['refresh_token']?.toString();
       final providerAccess = payload['provider_access_token']?.toString();
       final idToken = payload['id_token']?.toString();
-      if (accessToken != null)
+      if (accessToken != null) {
         await secureStorage.write(key: 'access_token', value: accessToken);
-      if (refreshToken != null)
+      }
+      if (refreshToken != null) {
         await secureStorage.write(key: 'refresh_token', value: refreshToken);
+      }
       if (providerAccess != null && providerAccess.isNotEmpty) {
         if (provider == 'openrouter') {
           await secureStorage.write(
@@ -216,7 +218,7 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   Future<void> completeOpenRouterOAuth(Uri returnUri) async {
-    emit(AuthOAuthCompleting('openrouter'));
+    emit(const AuthOAuthCompleting('openrouter'));
     try {
       logger
           .i('Completing OpenRouter OAuth; returnUri=${returnUri.toString()}');
@@ -238,10 +240,12 @@ class AuthCubit extends Cubit<AuthState> {
       final accessToken = payload['access_token']?.toString();
       final refreshToken = payload['refresh_token']?.toString();
       final providerAccess = payload['provider_access_token']?.toString();
-      if (accessToken != null)
+      if (accessToken != null) {
         await secureStorage.write(key: 'access_token', value: accessToken);
-      if (refreshToken != null)
+      }
+      if (refreshToken != null) {
         await secureStorage.write(key: 'refresh_token', value: refreshToken);
+      }
       if (providerAccess != null && providerAccess.isNotEmpty) {
         await secureStorage.write(key: 'openrouter_key', value: providerAccess);
       }
@@ -295,15 +299,16 @@ class AuthCubit extends Cubit<AuthState> {
       final launched = await launchUrl(Uri.parse(patchedAuthUrl),
           mode: LaunchMode.externalApplication);
       logger.i('launchUrl(Google) result=$launched');
-      if (!launched)
+      if (!launched) {
         emit(const AuthOAuthError('google', 'Failed to launch browser'));
+      }
     } catch (e) {
       emit(AuthOAuthError('google', e.toString()));
     }
   }
 
   Future<void> completeGoogleOAuth(Uri returnUri) async {
-    emit(AuthOAuthCompleting('google'));
+    emit(const AuthOAuthCompleting('google'));
     try {
       logger.i('Completing Google OAuth; returnUri=${returnUri.toString()}');
       final code = returnUri.queryParameters['code'];
@@ -324,12 +329,15 @@ class AuthCubit extends Cubit<AuthState> {
       final refreshToken = payload['refresh_token']?.toString();
       final idToken = payload['id_token']?.toString();
       final emailVerified = payload['email_verified'] == true;
-      if (accessToken != null)
+      if (accessToken != null) {
         await secureStorage.write(key: 'access_token', value: accessToken);
-      if (refreshToken != null)
+      }
+      if (refreshToken != null) {
         await secureStorage.write(key: 'refresh_token', value: refreshToken);
-      if (idToken != null)
+      }
+      if (idToken != null) {
         await secureStorage.write(key: 'google_id_token', value: idToken);
+      }
       if (emailVerified) await prefs.saveBool('email_verified', true);
       try {
         await prefs.saveBool('google_auth_enabled', true);
@@ -370,15 +378,16 @@ class AuthCubit extends Cubit<AuthState> {
       final launched = await launchUrl(Uri.parse(patchedAuthUrl),
           mode: LaunchMode.externalApplication);
       logger.i('launchUrl(Microsoft) result=$launched');
-      if (!launched)
+      if (!launched) {
         emit(const AuthOAuthError('microsoft', 'Failed to launch browser'));
+      }
     } catch (e) {
       emit(AuthOAuthError('microsoft', e.toString()));
     }
   }
 
   Future<void> completeMicrosoftOAuth(Uri returnUri) async {
-    emit(AuthOAuthCompleting('microsoft'));
+    emit(const AuthOAuthCompleting('microsoft'));
     try {
       logger.i('Completing Microsoft OAuth; returnUri=${returnUri.toString()}');
       final code = returnUri.queryParameters['code'];
@@ -398,12 +407,15 @@ class AuthCubit extends Cubit<AuthState> {
       final accessToken = payload['access_token']?.toString();
       final refreshToken = payload['refresh_token']?.toString();
       final idToken = payload['id_token']?.toString();
-      if (accessToken != null)
+      if (accessToken != null) {
         await secureStorage.write(key: 'access_token', value: accessToken);
-      if (refreshToken != null)
+      }
+      if (refreshToken != null) {
         await secureStorage.write(key: 'refresh_token', value: refreshToken);
-      if (idToken != null)
+      }
+      if (idToken != null) {
         await secureStorage.write(key: 'microsoft_id_token', value: idToken);
+      }
       try {
         await prefs.saveBool('ms_auth_enabled', true);
       } catch (_) {}

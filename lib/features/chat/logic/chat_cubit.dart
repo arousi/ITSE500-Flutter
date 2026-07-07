@@ -478,8 +478,9 @@ class ChatCubit extends Cubit<ChatState> {
 
   String _classifyAttachmentType({required String ext, String? mime}) {
     final e = ext.toLowerCase();
-    if (['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp', 'heic'].contains(e))
+    if (['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp', 'heic'].contains(e)) {
       return 'image';
+    }
     if (e == 'pdf') return 'pdf';
     if (['xls', 'xlsx', 'csv'].contains(e)) return 'excel';
     if (e == 'json') return 'json';
@@ -536,8 +537,9 @@ class ChatCubit extends Cubit<ChatState> {
     if (providerModel.item1 == 'gemini') {
       final lower = modelId.toLowerCase();
       // Avoid Imagen billing-only models; prefer Gemini *image-generation* variants.
-      if (lower.startsWith('models/'))
+      if (lower.startsWith('models/')) {
         modelId = modelId.replaceFirst('models/', '');
+      }
       if (lower.startsWith('imagen-')) {
         final alts = (selectedProviderLLMs['gemini'] ?? const <String>[])
             .where((m) => m.toLowerCase().contains('image-generation'))
@@ -2490,8 +2492,9 @@ class ChatCubit extends Cubit<ChatState> {
         ProviderId.huggingface => ProviderType.huggingface,
       };
       final cached = _modelRepo.getCached(providerType);
-      if (cached.isEmpty)
+      if (cached.isEmpty) {
         return null; // Only synchronous lookups to avoid rebuild churn
+      }
       final variants = <String>{
         modelId,
         if (modelId.startsWith('models/')) modelId.replaceFirst('models/', ''),
@@ -2540,8 +2543,9 @@ class ChatCubit extends Cubit<ChatState> {
       return s;
     }
 
-    if (p != null && c != null)
+    if (p != null && c != null) {
       return 'USD ${fmtPerM(p)}/${fmtPerM(c)} · 1M tok';
+    }
     if (p != null) return 'USD ${fmtPerM(p)} · 1M tok (in)';
     if (c != null) return 'USD ${fmtPerM(c)} · 1M tok (out)';
     return 'USD · 1M tok';

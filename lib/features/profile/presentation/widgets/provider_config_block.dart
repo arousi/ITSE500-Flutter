@@ -99,11 +99,13 @@ class _ProviderConfigBlockState extends State<ProviderConfigBlock> {
     }
     // Push to global cubit to hydrate dropdowns
     final chatCubit = context.read<ChatCubit>();
-    if (_models.isNotEmpty)
+    if (_models.isNotEmpty) {
       chatCubit.setProviderLLMs(widget.providerKey, _models);
-    if (_selectedModels.isNotEmpty)
+    }
+    if (_selectedModels.isNotEmpty) {
       chatCubit.setSelectedProviderLLMs(
           widget.providerKey, _selectedModels.toList());
+    }
     // Restore expansion state
     final expanded =
         await storage.read(key: '${widget.providerKey}_$_kExpandedModelsKey');
@@ -210,9 +212,12 @@ class _ProviderConfigBlockState extends State<ProviderConfigBlock> {
     final outMods = (meta['out'] ?? '').toLowerCase();
     if (lower.contains('embed') ||
         lower.contains('embedding') ||
-        modality.contains('embed')) return 'embeddings';
-    if (outMods.contains('image') || modality.contains('text->image'))
+        modality.contains('embed')) {
+      return 'embeddings';
+    }
+    if (outMods.contains('image') || modality.contains('text->image')) {
       return 'imagegen';
+    }
     if (outMods.contains('audio')) return 'audio';
     if (inMods.contains('image') || outMods.contains('image')) return 'vision';
     return 'chat';
@@ -227,10 +232,13 @@ class _ProviderConfigBlockState extends State<ProviderConfigBlock> {
     final outMods = (meta['out'] ?? '').toLowerCase();
     if (lower.contains('embed') ||
         lower.contains('embedding') ||
-        modality.contains('embed')) types.add('embeddings');
+        modality.contains('embed')) {
+      types.add('embeddings');
+    }
     // Image out implies generation capability
-    if (outMods.contains('image') || modality.contains('text->image'))
+    if (outMods.contains('image') || modality.contains('text->image')) {
       types.add('imagegen');
+    }
     if (outMods.contains('audio')) types.add('audio');
     // Vision means accepts images (image-in); some gens may also be vision if they support image prompts
     if (inMods.contains('image')) types.add('vision');

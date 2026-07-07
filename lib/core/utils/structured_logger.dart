@@ -161,8 +161,9 @@ class StructuredLogger {
           if (snippet != null && snippet.isNotEmpty) {
             // clamp snippet length
             const maxLen = 400;
-            if (snippet.length > maxLen)
+            if (snippet.length > maxLen) {
               snippet = '${snippet.substring(0, maxLen)}...';
+            }
             details['detail'] = snippet;
           }
           if (details.isNotEmpty) {

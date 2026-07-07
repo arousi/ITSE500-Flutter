@@ -114,10 +114,12 @@ class OAuthUnifiedService {
       String providerKey, Map<String, dynamic> json) async {
     final access = json['access_token']?.toString();
     final refresh = json['refresh_token']?.toString();
-    if (access != null)
+    if (access != null) {
       await _storage.write(key: _kAccess(providerKey), value: access);
-    if (refresh != null)
+    }
+    if (refresh != null) {
       await _storage.write(key: _kRefresh(providerKey), value: refresh);
+    }
   }
 
   String _kAccess(String p) => 'oauth_${p}_access_token';

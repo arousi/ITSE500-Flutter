@@ -140,8 +140,9 @@ class _AuthenticationOptionsState extends State<AuthenticationOptions> {
     if (success) {
       await _saveAuthOption('biometric_auth_enabled', value);
       // Inform AuthCubit about preference change.
-      if (mounted)
+      if (mounted) {
         context.read<AuthCubit>().applyBiometricPreferenceChanged(value);
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('Biometric auth failed or unavailable')));
@@ -185,27 +186,30 @@ class _AuthenticationOptionsState extends State<AuthenticationOptions> {
               _loading.remove('google');
             });
             await _saveAuthOption('google_auth_enabled', false);
-            if (mounted)
+            if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Google sign-in failed')));
+            }
           } else if (state.provider == 'microsoft') {
             setState(() {
               msAuthEnabled = false;
               _loading.remove('ms');
             });
             await _saveAuthOption('ms_auth_enabled', false);
-            if (mounted)
+            if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Microsoft sign-in failed')));
+            }
           } else if (state.provider == 'openrouter') {
             setState(() {
               openRouterEnabled = false;
               _loading.remove('openrouter');
             });
             await _saveAuthOption('openrouter_auth_enabled', false);
-            if (mounted)
+            if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('OpenRouter sign-in failed')));
+            }
           }
         } else if (state is AuthAuthenticated) {
           // After auth state settles, re-load flags from SharedPreferences in case listener missed success

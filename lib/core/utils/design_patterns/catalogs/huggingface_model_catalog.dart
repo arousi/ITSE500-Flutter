@@ -7,23 +7,31 @@ import 'package:flutter_app_itse500/core/utils/unified_logger.dart';
 Set<ModelCategory> _categorizeHf(String id) {
   final lower = id.toLowerCase();
   final cats = <ModelCategory>{};
-  if (lower.contains('embed') || lower.contains('sentence-transformers'))
+  if (lower.contains('embed') || lower.contains('sentence-transformers')) {
     cats.add(ModelCategory.embeddings);
+  }
   if (lower.contains('diffusion') ||
       lower.contains('sd3') ||
       lower.contains('stable-diffusion') ||
       lower.contains('flux') ||
       lower.contains('-img') ||
-      lower.contains('-image')) cats.add(ModelCategory.image);
-  if (lower.contains('whisper') || lower.contains('asr'))
+      lower.contains('-image')) {
+    cats.add(ModelCategory.image);
+  }
+  if (lower.contains('whisper') || lower.contains('asr')) {
     cats.add(ModelCategory.audioTranscribe);
-  if (lower.contains('tts') || lower.contains('bark'))
+  }
+  if (lower.contains('tts') || lower.contains('bark')) {
     cats.add(ModelCategory.audioTts);
-  if (lower.contains('moderation') || lower.contains('guard'))
+  }
+  if (lower.contains('moderation') || lower.contains('guard')) {
     cats.add(ModelCategory.moderation);
+  }
   if (lower.contains('reason') ||
       lower.contains('r1') ||
-      lower.contains('deepseek-r1')) cats.add(ModelCategory.reasoning);
+      lower.contains('deepseek-r1')) {
+    cats.add(ModelCategory.reasoning);
+  }
   if (lower.contains('instruct') ||
       lower.contains('chat') ||
       lower.contains('qwen') ||

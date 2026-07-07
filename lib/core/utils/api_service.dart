@@ -166,9 +166,10 @@ class ApiService {
           'Authorization': 'Bearer $apiKey',
         },
       );
-      if (debug)
+      if (debug) {
         _logger.d(
             '[DEBUG] OpenAI key validation status=${response.statusCode} len=${response.body.length}');
+      }
       if (response.statusCode == 200) return true;
       await logErrorToFile(
           'OpenAI key check failed: ${response.statusCode} - ${response.body}');
@@ -189,9 +190,10 @@ class ApiService {
           'Authorization': 'Bearer $apiKey',
         },
       );
-      if (debug)
+      if (debug) {
         _logger.d(
             '[DEBUG] OpenRouter key validation status=${response.statusCode}');
+      }
       if (response.statusCode == 200) return true;
       await logErrorToFile(
           'OpenRouter key check failed: ${response.statusCode} - ${response.body}');
@@ -217,23 +219,26 @@ class ApiService {
           headers: {'x-goog-api-key': apiKey},
         );
       } catch (e) {
-        if (debug)
+        if (debug) {
           _logger.w(
               '[DEBUG] Primary Gemini models list attempt (header auth) threw',
               error: e);
+        }
       }
 
       if (resp == null || resp.statusCode != 200) {
         // Fallback with query param style
         final urlWithQuery = '$googleGeminiModelsEndpoint?key=$apiKey';
-        if (debug)
+        if (debug) {
           _logger.d(
               '[DEBUG] Gemini header auth list failed (status=${resp?.statusCode}); retrying with query param: $urlWithQuery');
+        }
         try {
           resp = await tryGet(urlWithQuery);
         } catch (e) {
-          if (debug)
+          if (debug) {
             _logger.w('[DEBUG] Gemini query param attempt threw', error: e);
+          }
         }
       }
 
@@ -243,9 +248,10 @@ class ApiService {
           final models = _parseModelList(decoded)
               .where((m) => m.toLowerCase().contains('gemini'))
               .toList();
-          if (debug)
+          if (debug) {
             _logger.d(
                 '[DEBUG] Gemini key validation succeeded; modelsFound=${models.length} sample=${models.take(3).toList()}');
+          }
           return models
               .isNotEmpty; // treat as valid only if we actually saw gemini models
         } catch (e) {
@@ -451,9 +457,10 @@ class ApiService {
       if (resp.statusCode == 200) {
         final decoded = jsonDecode(resp.body);
         final list = _parseModelList(decoded);
-        if (debug)
+        if (debug) {
           _logger.d(
               '[DEBUG] OpenAI models fetched count=${list.length} sample=${list.take(5).toList()}');
+        }
         return list;
       }
       final msg =
@@ -477,9 +484,10 @@ class ApiService {
       if (resp.statusCode == 200) {
         final decoded = jsonDecode(resp.body);
         final list = _parseModelList(decoded);
-        if (debug)
+        if (debug) {
           _logger.d(
               '[DEBUG] OpenRouter models fetched count=${list.length} sample=${list.take(5).toList()}');
+        }
         return list;
       }
       final msg =
@@ -535,9 +543,10 @@ class ApiService {
         final list = _parseModelList(decoded)
             .where((m) => m.contains('gemini'))
             .toList();
-        if (debug)
+        if (debug) {
           _logger.d(
               '[DEBUG] Gemini models fetched count=${list.length} sample=${list.take(5).toList()}');
+        }
         return list;
       }
       final msg =
@@ -2475,8 +2484,9 @@ class ApiService {
       Map<String, String> headers = {
         'Accept': 'application/json',
       };
-      if (accessToken != null && accessToken.isNotEmpty)
+      if (accessToken != null && accessToken.isNotEmpty) {
         headers['Authorization'] = 'Bearer $accessToken';
+      }
 
       // Safe diagnostic: do not log token, only presence and length
       final hasAuth = headers.containsKey('Authorization');
@@ -2493,10 +2503,11 @@ class ApiService {
         throw Exception('Server returned unexpected response.');
       }
       final decoded = jsonDecode(resp.body);
-      if (resp.statusCode == 200)
+      if (resp.statusCode == 200) {
         return decoded is Map
             ? decoded.cast<String, dynamic>()
             : <String, dynamic>{'data': decoded};
+      }
 
       // If 401 with access token, attempt refresh once
       if (resp.statusCode == 401 &&
@@ -2519,10 +2530,11 @@ class ApiService {
             throw Exception('Server returned unexpected response.');
           }
           final rj = jsonDecode(retry.body);
-          if (retry.statusCode == 200)
+          if (retry.statusCode == 200) {
             return rj is Map
                 ? rj.cast<String, dynamic>()
                 : <String, dynamic>{'data': rj};
+          }
         }
         // Final fallback: try public GET by UUID (backend allows this only with explicit flag)
         try {

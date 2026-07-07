@@ -279,8 +279,9 @@ class DataRepository {
       {bool throwOnError = false, bool forceRefresh = false}) async {
     final sig = _keySig('openai', apiKey);
     final c = _modelCache[sig];
-    if (!forceRefresh && c != null && _isFresh(c.ts, _modelsTtl))
+    if (!forceRefresh && c != null && _isFresh(c.ts, _modelsTtl)) {
       return c.value;
+    }
     final list =
         await _api.fetchOpenAIModels(apiKey, throwOnError: throwOnError);
     _modelCache[sig] = _Cached(list, DateTime.now());
@@ -291,8 +292,9 @@ class DataRepository {
       {bool throwOnError = false, bool forceRefresh = false}) async {
     final sig = _keySig('openrouter', apiKey);
     final c = _modelCache[sig];
-    if (!forceRefresh && c != null && _isFresh(c.ts, _modelsTtl))
+    if (!forceRefresh && c != null && _isFresh(c.ts, _modelsTtl)) {
       return c.value;
+    }
     final list =
         await _api.fetchOpenRouterModels(apiKey, throwOnError: throwOnError);
     _modelCache[sig] = _Cached(list, DateTime.now());
@@ -303,8 +305,9 @@ class DataRepository {
       {bool throwOnError = false, bool forceRefresh = false}) async {
     final sig = _keySig('openrouter.raw', apiKey);
     final c = _modelRawCache[sig];
-    if (!forceRefresh && c != null && _isFresh(c.ts, _modelsTtl))
+    if (!forceRefresh && c != null && _isFresh(c.ts, _modelsTtl)) {
       return c.value;
+    }
     final list =
         await _api.fetchOpenRouterModelsRaw(apiKey, throwOnError: throwOnError);
     _modelRawCache[sig] = _Cached(list, DateTime.now());
@@ -341,8 +344,9 @@ class DataRepository {
       {bool throwOnError = false, bool forceRefresh = false}) async {
     final sig = _keySig('gemini', apiKey);
     final c = _modelCache[sig];
-    if (!forceRefresh && c != null && _isFresh(c.ts, _modelsTtl))
+    if (!forceRefresh && c != null && _isFresh(c.ts, _modelsTtl)) {
       return c.value;
+    }
     final list =
         await _api.fetchGoogleGeminiModels(apiKey, throwOnError: throwOnError);
     _modelCache[sig] = _Cached(list, DateTime.now());
@@ -353,8 +357,9 @@ class DataRepository {
       {bool throwOnError = false, bool forceRefresh = false}) async {
     final sig = _keySig('gemini.raw', apiKey);
     final c = _modelRawCache[sig];
-    if (!forceRefresh && c != null && _isFresh(c.ts, _modelsTtl))
+    if (!forceRefresh && c != null && _isFresh(c.ts, _modelsTtl)) {
       return c.value;
+    }
     final list = await _api.fetchGoogleGeminiModelsRaw(apiKey,
         throwOnError: throwOnError);
     _modelRawCache[sig] = _Cached(list, DateTime.now());
@@ -367,8 +372,9 @@ class DataRepository {
     final key = apiKey ?? '__no_key__';
     final sig = _keySig('huggingface.raw', key);
     final c = _hfModelRawCache[sig];
-    if (!forceRefresh && c != null && _isFresh(c.ts, _modelsTtl))
+    if (!forceRefresh && c != null && _isFresh(c.ts, _modelsTtl)) {
       return c.value;
+    }
     final list = await _api.fetchHuggingFaceModelsRaw(apiKey: apiKey);
     _hfModelRawCache[sig] = _Cached(list, DateTime.now());
     return list;
@@ -422,8 +428,9 @@ class DataRepository {
     final key = (baseUrl ?? '').trim();
     final sig = _keySig('lmstudio', key);
     final c = _modelCache[sig];
-    if (!forceRefresh && c != null && _isFresh(c.ts, _modelsTtl))
+    if (!forceRefresh && c != null && _isFresh(c.ts, _modelsTtl)) {
       return c.value;
+    }
     final list = await _api.fetchLmStudioModels(baseUrl: baseUrl);
     _modelCache[sig] = _Cached(list, DateTime.now());
     return list;
@@ -575,8 +582,9 @@ class DataRepository {
       );
     }
     final resp = await _api.tryGet(url);
-    if (resp.statusCode != 200)
+    if (resp.statusCode != 200) {
       throw Exception('GET failed ${resp.statusCode}');
+    }
     return jsonDecode(resp.body) as Map<String, dynamic>;
   }
 
@@ -784,7 +792,9 @@ class DataRepository {
   Future<void> ensureHotspotHostLoaded() async {
     if (_cachedHotspotHost != null &&
         _hotspotHostTs != null &&
-        DateTime.now().difference(_hotspotHostTs!) < _hotspotTtl) return;
+        DateTime.now().difference(_hotspotHostTs!) < _hotspotTtl) {
+      return;
+    }
     final v = await _secure.read(key: _hotspotKey);
     if (v != null && v.isNotEmpty) {
       _cachedHotspotHost = v;
@@ -960,10 +970,12 @@ class DataRepository {
       }
       if ((access != null && access.isNotEmpty) ||
           (refresh != null && refresh.isNotEmpty)) {
-        if (access != null && access.isNotEmpty)
+        if (access != null && access.isNotEmpty) {
           await _secure.write(key: 'access_token', value: access);
-        if (refresh != null && refresh.isNotEmpty)
+        }
+        if (refresh != null && refresh.isNotEmpty) {
           await _secure.write(key: 'refresh_token', value: refresh);
+        }
         return {
           if (access != null && access.isNotEmpty) 'access': access,
           if (refresh != null && refresh.isNotEmpty) 'refresh': refresh,
