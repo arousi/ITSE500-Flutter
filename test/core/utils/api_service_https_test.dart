@@ -47,6 +47,28 @@ void main() {
     });
   });
 
+  group(
+      'ApiService.sendLlmRequest / sendLlmRequestStream defense-in-depth '
+      'HTTPS re-enforcement', () {
+    // Both methods run their `url` parameter through
+    // _enforceHttpsForKnownProdHosts before use: sendLlmRequest as
+    // defense-in-depth alongside tryPost's own enforcement, and
+    // sendLlmRequestStream because it builds its own http.Request
+    // directly instead of going through tryPost. This exercises the same
+    // choke point with the exact input shape those two call sites pass.
+    test('upgrades a plaintext prod LLM endpoint URL to https', () {
+      final result = ApiService.enforceHttpsForKnownProdHostsForTest(
+          'http://www.itse500-ok.ly/api/v1/llm/chat/');
+      expect(result, 'https://www.itse500-ok.ly/api/v1/llm/chat/');
+    });
+
+    test('leaves a third-party LLM provider URL (e.g. LM Studio) untouched',
+        () {
+      const url = 'http://localhost:1234/v1/chat/completions';
+      expect(ApiService.enforceHttpsForKnownProdHostsForTest(url), url);
+    });
+  });
+
   group('ApiService redirect-hop HTTPS re-enforcement', () {
     // Mirrors the redirect-resolution logic in tryPost/tryGet/tryPatch/
     // tryDelete: resolve the Location header against the original request

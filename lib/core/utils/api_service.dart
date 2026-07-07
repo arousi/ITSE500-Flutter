@@ -657,6 +657,11 @@ class ApiService {
     required Map<String, String> headers,
     required Map<String, dynamic> body,
   }) async {
+    // Defense-in-depth: re-apply the HTTPS choke point here even though
+    // tryPost already enforces it internally, so a known prod host is
+    // never sent over plaintext http in this method's own logging/URL
+    // bookkeeping either. Leaves provider/localhost URLs untouched.
+    url = _enforceHttpsForKnownProdHosts(url);
     try {
       final t0 = DateTime.now();
       final model = body['model']?.toString();
@@ -748,6 +753,11 @@ class ApiService {
     required Map<String, String> headers,
     required Map<String, dynamic> body,
   }) async* {
+    // This method builds its own http.Request directly instead of going
+    // through tryPost, so it must apply the HTTPS choke point itself
+    // (defense-in-depth against a known prod host being reached over
+    // plaintext http). Leaves provider/localhost URLs untouched.
+    url = _enforceHttpsForKnownProdHosts(url);
     final client = http.Client();
     try {
       final t0 = DateTime.now();
