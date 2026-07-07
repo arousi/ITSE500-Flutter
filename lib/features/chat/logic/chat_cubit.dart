@@ -350,7 +350,7 @@ class ChatCubit extends Cubit<ChatState> {
   Future<void> pickAttachment(
       {bool withData = false, List<String>? allowedExtensions}) async {
     try {
-      final result = await FilePicker.platform.pickFiles(
+      final result = await FilePicker.pickFiles(
         allowMultiple: false,
         withData: withData,
         type: allowedExtensions != null ? FileType.custom : FileType.any,

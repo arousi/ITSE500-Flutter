@@ -634,7 +634,7 @@ class _FileAttachmentTile extends StatelessWidget {
       final ext = base.contains('.') ? base.split('.').last : 'bin';
       String? targetPath;
       try {
-        targetPath = await FilePicker.platform.saveFile(
+        targetPath = await FilePicker.saveFile(
           dialogTitle: 'Save file as',
           fileName: base,
           type: FileType.custom,
@@ -1059,7 +1059,7 @@ class _FullscreenImageActionsState extends State<_FullscreenImageActions> {
       try {
         String? targetPath;
         try {
-          targetPath = await FilePicker.platform.saveFile(
+          targetPath = await FilePicker.saveFile(
             dialogTitle: 'Save image as',
             fileName: 'generated_${DateTime.now().millisecondsSinceEpoch}.png',
             type: FileType.custom,
