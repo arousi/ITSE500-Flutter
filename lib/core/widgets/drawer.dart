@@ -249,8 +249,9 @@ class _CustomDrawerState extends State<CustomDrawer> {
                                         if (selected) {
                                           _selectedIds
                                               .remove(conv.conversationId);
-                                          if (_selectedIds.isEmpty)
+                                          if (_selectedIds.isEmpty) {
                                             _selectionMode = false;
+                                          }
                                         } else {
                                           _selectedIds.add(conv.conversationId);
                                         }

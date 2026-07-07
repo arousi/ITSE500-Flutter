@@ -40,20 +40,24 @@ Set<ModelCategory> _categorizeOpenAiId(String id) {
 
   // direct matches or prefix matches of known keys
   for (final key in _openAiKnownHeuristics.keys) {
-    if (lower == key || lower.startsWith('$key-'))
+    if (lower == key || lower.startsWith('$key-')) {
       return _openAiKnownHeuristics[key]!;
+    }
   }
 
   if (lower.contains('embedding')) return {ModelCategory.embeddings};
   if (lower.contains('whisper')) return {ModelCategory.audioTranscribe};
   if (lower.contains('tts')) return {ModelCategory.audioTts};
   if (lower.contains('moderation')) return {ModelCategory.moderation};
-  if (lower.startsWith('dall-e') || lower.contains('image'))
+  if (lower.startsWith('dall-e') || lower.contains('image')) {
     return {ModelCategory.image};
-  if (lower.startsWith('o1') || lower.startsWith('o3'))
+  }
+  if (lower.startsWith('o1') || lower.startsWith('o3')) {
     return {ModelCategory.reasoning};
-  if (lower.contains('instruct'))
+  }
+  if (lower.contains('instruct')) {
     return {ModelCategory.chat}; // legacy completion, treat as chat-capable
+  }
   if (lower.startsWith('gpt-')) return {ModelCategory.chat};
 
   return {ModelCategory.other};

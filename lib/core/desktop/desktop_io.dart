@@ -7,8 +7,9 @@ import 'package:printing/printing.dart';
 
 Future<File?> pickFile({String? initialDirectory}) async {
   if (kIsWeb) return null;
-  if (!(Platform.isWindows || Platform.isLinux || Platform.isMacOS))
+  if (!(Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
     return null;
+  }
   const typeGroup = XTypeGroup(label: 'any');
   final file = await openFile(
       acceptedTypeGroups: [typeGroup], initialDirectory: initialDirectory);
@@ -21,8 +22,9 @@ Future<String?> saveFile(
     List<int>? bytes,
     String mimeType = 'application/octet-stream'}) async {
   if (kIsWeb) return null;
-  if (!(Platform.isWindows || Platform.isLinux || Platform.isMacOS))
+  if (!(Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
     return null;
+  }
   final loc = await getSaveLocation(suggestedName: suggestedName);
   if (loc == null) return null;
   if (bytes != null) {

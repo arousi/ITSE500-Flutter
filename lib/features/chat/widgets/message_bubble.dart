@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:math' as math;
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_filex/open_filex.dart';
@@ -447,28 +446,32 @@ class _DecryptedAttachmentsState extends State<_DecryptedAttachments> {
               mac: mac,
               nonceB64: ivB64,
             );
-            if (mounted)
+            if (mounted) {
               setState(() {
                 _decrypted[path] = clear;
               });
+            }
           }
         }
       } else {
-        if (mounted)
+        if (mounted) {
           setState(() {
             _decrypted[path] = Uint8List.fromList(bytes);
           });
+        }
       }
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _decrypted[path] = null;
         });
+      }
     } finally {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _loading[path] = false;
         });
+      }
     }
   }
 
@@ -558,8 +561,9 @@ class _ImageActions extends StatelessWidget {
       if (result is Map) {
         success = (result['isSuccess'] == true) || (result['filePath'] != null);
       }
-      if (context.mounted)
+      if (context.mounted) {
         Toaster.show(context, success ? 'Saved to gallery' : 'Save failed');
+      }
     } catch (e) {
       if (context.mounted) Toaster.show(context, 'Save failed: $e');
     }
@@ -572,9 +576,10 @@ class _ImageActions extends StatelessWidget {
       final base = path.split(RegExp(r'[\\/]')).last.replaceAll('.enc', '');
       final out = File('${dir.path}${Platform.pathSeparator}export_$base');
       await out.writeAsBytes(decrypted!, flush: true);
-      if (context.mounted)
+      if (context.mounted) {
         Toaster.show(context,
             'Exported: ${out.path.split(Platform.pathSeparator).last}');
+      }
     } catch (e) {
       if (context.mounted) Toaster.show(context, 'Export failed: $e');
     }
@@ -629,7 +634,7 @@ class _FileAttachmentTile extends StatelessWidget {
       final ext = base.contains('.') ? base.split('.').last : 'bin';
       String? targetPath;
       try {
-        targetPath = await FilePicker.platform.saveFile(
+        targetPath = await FilePicker.saveFile(
           dialogTitle: 'Save file as',
           fileName: base,
           type: FileType.custom,
@@ -644,10 +649,11 @@ class _FileAttachmentTile extends StatelessWidget {
       final savedPath = await FileSaver.instance.saveFile(
         name: base,
         bytes: data!,
-        ext: ext,
+        fileExtension: ext,
       );
-      if (context.mounted)
+      if (context.mounted) {
         Toaster.show(context, 'Saved (fallback): $savedPath');
+      }
     } catch (e) {
       if (context.mounted) Toaster.show(context, 'Save failed: $e');
     }
@@ -687,15 +693,18 @@ class _FileAttachmentTile extends StatelessWidget {
                       await tmp.writeAsBytes(data!, flush: true);
                       final res = await OpenFilex.open(tmp.path);
                       if (res.type == ResultType.noAppToOpen) {
-                        if (context.mounted)
+                        if (context.mounted) {
                           Toaster.show(context, 'No app found to open file');
+                        }
                       } else if (res.type == ResultType.error) {
-                        if (context.mounted)
+                        if (context.mounted) {
                           Toaster.show(context, 'Open failed: ${res.message}');
+                        }
                       }
                     } catch (e) {
-                      if (context.mounted)
+                      if (context.mounted) {
                         Toaster.show(context, 'Open failed: $e');
+                      }
                     }
                   },
           ),
@@ -713,8 +722,9 @@ class _FileAttachmentTile extends StatelessWidget {
                       await Share.shareXFiles(
                           [XFile(tmp.path, mimeType: raw['mime']?.toString())]);
                     } catch (e) {
-                      if (context.mounted)
+                      if (context.mounted) {
                         Toaster.show(context, 'Share failed: $e');
+                      }
                     }
                   },
           ),
@@ -1018,10 +1028,11 @@ class _FullscreenImageActionsState extends State<_FullscreenImageActions> {
     try {
       await fn();
     } finally {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _busy = false;
         });
+      }
     }
   }
 
@@ -1048,7 +1059,7 @@ class _FullscreenImageActionsState extends State<_FullscreenImageActions> {
       try {
         String? targetPath;
         try {
-          targetPath = await FilePicker.platform.saveFile(
+          targetPath = await FilePicker.saveFile(
             dialogTitle: 'Save image as',
             fileName: 'generated_${DateTime.now().millisecondsSinceEpoch}.png',
             type: FileType.custom,
@@ -1063,7 +1074,7 @@ class _FullscreenImageActionsState extends State<_FullscreenImageActions> {
         final savedPath = await FileSaver.instance.saveFile(
           name: 'generated_${DateTime.now().millisecondsSinceEpoch}',
           bytes: data,
-          ext: 'png',
+          fileExtension: 'png',
         );
         if (context.mounted) Toaster.show(context, 'Saved: $savedPath');
       } catch (e) {
@@ -1081,12 +1092,14 @@ class _FullscreenImageActionsState extends State<_FullscreenImageActions> {
         final result = await ImageGallerySaverPlus.saveImage(data,
             quality: 100, name: name);
         bool success = false;
-        if (result is Map)
+        if (result is Map) {
           success =
               (result['isSuccess'] == true) || (result['filePath'] != null);
-        if (context.mounted)
+        }
+        if (context.mounted) {
           Toaster.show(
               context, success ? 'Saved to gallery' : 'Gallery save failed');
+        }
       } catch (e) {
         if (context.mounted) Toaster.show(context, 'Gallery save failed: $e');
       }

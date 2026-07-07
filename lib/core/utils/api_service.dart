@@ -14,7 +14,7 @@ import 'package:flutter_app_itse500/core/utils/unified_logger.dart';
 import 'package:flutter_app_itse500/core/utils/structured_logger.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:crypto/crypto.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, visibleForTesting;
 
 import '../models/custom_user.dart';
 // import '../models/visitor_user.dart'; // unused
@@ -157,6 +157,39 @@ class ApiService {
     return false;
   }
 
+  // Known production hosts that must never be reached over plaintext HTTP.
+  // Deliberately narrower than _isBackendHostName: it must NOT include
+  // localhost/127.0.0.1/LAN/emulator hosts (dev) or third-party providers
+  // (LM Studio, OpenAI, etc.) which are allowed to stay on whatever scheme
+  // they were configured with.
+  static bool _isKnownProdHost(String host) {
+    final h = host.toLowerCase();
+    return h == 'www.itse500-ok.ly' || h == 'itse500-ok.ly';
+  }
+
+  /// Upgrades a candidate request URL string to HTTPS if it targets a known
+  /// production host but was somehow built with a plain http:// scheme
+  /// (e.g. a caller passed an absolute URL directly, bypassing
+  /// [_normalizeApiBase]). Leaves every other URL (dev hosts, LAN, LM
+  /// Studio, third-party providers) untouched.
+  static String _enforceHttpsForKnownProdHosts(String urlString) {
+    if (!urlString.startsWith('http://')) return urlString;
+    try {
+      final u = Uri.parse(urlString);
+      if (_isKnownProdHost(u.host)) {
+        return u.replace(scheme: 'https').toString();
+      }
+    } catch (_) {}
+    return urlString;
+  }
+
+  @visibleForTesting
+  static String enforceHttpsForKnownProdHostsForTest(String urlString) =>
+      _enforceHttpsForKnownProdHosts(urlString);
+
+  @visibleForTesting
+  static String normalizeApiBaseForTest(String v) => _normalizeApiBase(v);
+
   /// Checks OpenAI key using GET /models (preferred lightweight validation)
   Future<bool> checkOpenAiKey(String apiKey) async {
     try {
@@ -166,9 +199,10 @@ class ApiService {
           'Authorization': 'Bearer $apiKey',
         },
       );
-      if (debug)
+      if (debug) {
         _logger.d(
             '[DEBUG] OpenAI key validation status=${response.statusCode} len=${response.body.length}');
+      }
       if (response.statusCode == 200) return true;
       await logErrorToFile(
           'OpenAI key check failed: ${response.statusCode} - ${response.body}');
@@ -189,9 +223,10 @@ class ApiService {
           'Authorization': 'Bearer $apiKey',
         },
       );
-      if (debug)
+      if (debug) {
         _logger.d(
             '[DEBUG] OpenRouter key validation status=${response.statusCode}');
+      }
       if (response.statusCode == 200) return true;
       await logErrorToFile(
           'OpenRouter key check failed: ${response.statusCode} - ${response.body}');
@@ -217,23 +252,26 @@ class ApiService {
           headers: {'x-goog-api-key': apiKey},
         );
       } catch (e) {
-        if (debug)
+        if (debug) {
           _logger.w(
               '[DEBUG] Primary Gemini models list attempt (header auth) threw',
               error: e);
+        }
       }
 
       if (resp == null || resp.statusCode != 200) {
         // Fallback with query param style
         final urlWithQuery = '$googleGeminiModelsEndpoint?key=$apiKey';
-        if (debug)
+        if (debug) {
           _logger.d(
               '[DEBUG] Gemini header auth list failed (status=${resp?.statusCode}); retrying with query param: $urlWithQuery');
+        }
         try {
           resp = await tryGet(urlWithQuery);
         } catch (e) {
-          if (debug)
+          if (debug) {
             _logger.w('[DEBUG] Gemini query param attempt threw', error: e);
+          }
         }
       }
 
@@ -243,9 +281,10 @@ class ApiService {
           final models = _parseModelList(decoded)
               .where((m) => m.toLowerCase().contains('gemini'))
               .toList();
-          if (debug)
+          if (debug) {
             _logger.d(
                 '[DEBUG] Gemini key validation succeeded; modelsFound=${models.length} sample=${models.take(3).toList()}');
+          }
           return models
               .isNotEmpty; // treat as valid only if we actually saw gemini models
         } catch (e) {
@@ -451,9 +490,10 @@ class ApiService {
       if (resp.statusCode == 200) {
         final decoded = jsonDecode(resp.body);
         final list = _parseModelList(decoded);
-        if (debug)
+        if (debug) {
           _logger.d(
               '[DEBUG] OpenAI models fetched count=${list.length} sample=${list.take(5).toList()}');
+        }
         return list;
       }
       final msg =
@@ -477,9 +517,10 @@ class ApiService {
       if (resp.statusCode == 200) {
         final decoded = jsonDecode(resp.body);
         final list = _parseModelList(decoded);
-        if (debug)
+        if (debug) {
           _logger.d(
               '[DEBUG] OpenRouter models fetched count=${list.length} sample=${list.take(5).toList()}');
+        }
         return list;
       }
       final msg =
@@ -535,9 +576,10 @@ class ApiService {
         final list = _parseModelList(decoded)
             .where((m) => m.contains('gemini'))
             .toList();
-        if (debug)
+        if (debug) {
           _logger.d(
               '[DEBUG] Gemini models fetched count=${list.length} sample=${list.take(5).toList()}');
+        }
         return list;
       }
       final msg =
@@ -615,6 +657,11 @@ class ApiService {
     required Map<String, String> headers,
     required Map<String, dynamic> body,
   }) async {
+    // Defense-in-depth: re-apply the HTTPS choke point here even though
+    // tryPost already enforces it internally, so a known prod host is
+    // never sent over plaintext http in this method's own logging/URL
+    // bookkeeping either. Leaves provider/localhost URLs untouched.
+    url = _enforceHttpsForKnownProdHosts(url);
     try {
       final t0 = DateTime.now();
       final model = body['model']?.toString();
@@ -706,6 +753,11 @@ class ApiService {
     required Map<String, String> headers,
     required Map<String, dynamic> body,
   }) async* {
+    // This method builds its own http.Request directly instead of going
+    // through tryPost, so it must apply the HTTPS choke point itself
+    // (defense-in-depth against a known prod host being reached over
+    // plaintext http). Leaves provider/localhost URLs untouched.
+    url = _enforceHttpsForKnownProdHosts(url);
     final client = http.Client();
     try {
       final t0 = DateTime.now();
@@ -1442,7 +1494,11 @@ class ApiService {
     // Deduplicate while preserving order to avoid redundant attempts
     final seen = <String>{};
     final urls =
-        candidateStrings.where((s) => seen.add(s)).map(Uri.parse).toList();
+        candidateStrings
+            .map(_enforceHttpsForKnownProdHosts)
+            .where((s) => seen.add(s))
+            .map(Uri.parse)
+            .toList();
     _logger.i(
         'Trying POST endpoints for $endpointOrUrl: ${urls.map((u) => u.toString()).join(", ")}');
 
@@ -1480,6 +1536,8 @@ class ApiService {
             try {
               final parsed = Uri.parse(loc);
               redirectUri = parsed.hasScheme ? parsed : url.resolveUri(parsed);
+              redirectUri = Uri.parse(
+                  _enforceHttpsForKnownProdHosts(redirectUri.toString()));
             } catch (_) {
               _logger.w('Invalid redirect location: $loc');
               continue; // try next candidate
@@ -1615,7 +1673,11 @@ class ApiService {
 
     final seen = <String>{};
     final urls =
-        candidateStrings.where((s) => seen.add(s)).map(Uri.parse).toList();
+        candidateStrings
+            .map(_enforceHttpsForKnownProdHosts)
+            .where((s) => seen.add(s))
+            .map(Uri.parse)
+            .toList();
     _logger.i(
         'Trying GET endpoints for $endpointOrUrl: ${urls.map((u) => u.toString()).join(", ")}');
     http.Response? first401;
@@ -1652,6 +1714,8 @@ class ApiService {
             try {
               final parsed = Uri.parse(loc);
               redirectUri = parsed.hasScheme ? parsed : url.resolveUri(parsed);
+              redirectUri = Uri.parse(
+                  _enforceHttpsForKnownProdHosts(redirectUri.toString()));
             } catch (_) {
               _logger.w('Invalid redirect location: $loc');
               continue;
@@ -1790,7 +1854,11 @@ class ApiService {
 
     final seen = <String>{};
     final urls =
-        candidateStrings.where((s) => seen.add(s)).map(Uri.parse).toList();
+        candidateStrings
+            .map(_enforceHttpsForKnownProdHosts)
+            .where((s) => seen.add(s))
+            .map(Uri.parse)
+            .toList();
     _logger.i(
         'Trying PATCH endpoints for $endpointOrUrl: ${urls.map((u) => u.toString()).join(", ")}');
     for (final url in urls) {
@@ -1824,6 +1892,8 @@ class ApiService {
             try {
               final parsed = Uri.parse(loc);
               redirectUri = parsed.hasScheme ? parsed : url.resolveUri(parsed);
+              redirectUri = Uri.parse(
+                  _enforceHttpsForKnownProdHosts(redirectUri.toString()));
             } catch (_) {
               _logger.w('Invalid redirect location: $loc');
               continue;
@@ -1961,7 +2031,11 @@ class ApiService {
 
     final seen = <String>{};
     final urls =
-        candidateStrings.where((s) => seen.add(s)).map(Uri.parse).toList();
+        candidateStrings
+            .map(_enforceHttpsForKnownProdHosts)
+            .where((s) => seen.add(s))
+            .map(Uri.parse)
+            .toList();
     _logger.i(
         'Trying DELETE endpoints for $endpointOrUrl: ${urls.map((u) => u.toString()).join(", ")}');
     http.Response? first401;
@@ -1998,6 +2072,8 @@ class ApiService {
             try {
               final parsed = Uri.parse(loc);
               redirectUri = parsed.hasScheme ? parsed : url.resolveUri(parsed);
+              redirectUri = Uri.parse(
+                  _enforceHttpsForKnownProdHosts(redirectUri.toString()));
             } catch (_) {
               _logger.w('Invalid redirect location: $loc');
               continue;
@@ -2475,8 +2551,9 @@ class ApiService {
       Map<String, String> headers = {
         'Accept': 'application/json',
       };
-      if (accessToken != null && accessToken.isNotEmpty)
+      if (accessToken != null && accessToken.isNotEmpty) {
         headers['Authorization'] = 'Bearer $accessToken';
+      }
 
       // Safe diagnostic: do not log token, only presence and length
       final hasAuth = headers.containsKey('Authorization');
@@ -2493,10 +2570,11 @@ class ApiService {
         throw Exception('Server returned unexpected response.');
       }
       final decoded = jsonDecode(resp.body);
-      if (resp.statusCode == 200)
+      if (resp.statusCode == 200) {
         return decoded is Map
             ? decoded.cast<String, dynamic>()
             : <String, dynamic>{'data': decoded};
+      }
 
       // If 401 with access token, attempt refresh once
       if (resp.statusCode == 401 &&
@@ -2519,10 +2597,11 @@ class ApiService {
             throw Exception('Server returned unexpected response.');
           }
           final rj = jsonDecode(retry.body);
-          if (retry.statusCode == 200)
+          if (retry.statusCode == 200) {
             return rj is Map
                 ? rj.cast<String, dynamic>()
                 : <String, dynamic>{'data': rj};
+          }
         }
         // Final fallback: try public GET by UUID (backend allows this only with explicit flag)
         try {
