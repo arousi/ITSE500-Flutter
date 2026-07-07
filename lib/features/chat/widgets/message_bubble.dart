@@ -649,7 +649,7 @@ class _FileAttachmentTile extends StatelessWidget {
       final savedPath = await FileSaver.instance.saveFile(
         name: base,
         bytes: data!,
-        ext: ext,
+        fileExtension: ext,
       );
       if (context.mounted) {
         Toaster.show(context, 'Saved (fallback): $savedPath');
@@ -1074,7 +1074,7 @@ class _FullscreenImageActionsState extends State<_FullscreenImageActions> {
         final savedPath = await FileSaver.instance.saveFile(
           name: 'generated_${DateTime.now().millisecondsSinceEpoch}',
           bytes: data,
-          ext: 'png',
+          fileExtension: 'png',
         );
         if (context.mounted) Toaster.show(context, 'Saved: $savedPath');
       } catch (e) {
