@@ -159,3 +159,17 @@ pubspec.lock
 *.orig
 *.rej
 .DS_Store
+
+# ── Secrets & signing material (never commit) ──
+# Real secrets live outside VCS; see .env.example for the variable list.
+# NOTE: the root `.env` is intentionally tracked with NON-SECRET config only.
+*.pfx
+*.p12
+*.jks
+*.keystore
+# Local secret overrides
+.env.local
+.env.*.local
+.env.secret
+key.properties
+android/app/release.keystore

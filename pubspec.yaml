@@ -167,8 +167,9 @@ msix_config:
   architecture: x64
   capabilities: internetClient
   protocol_activation: myapp
-  # For local testing without a real cert, let the tool generate a dev cert
+  # For local testing without a real cert, let the tool generate a dev cert.
+  # Signing certs are provided out-of-band — via CI secrets
+  # (WINDOWS_CERT_PFX / WINDOWS_CERT_PASSWORD) or scripts/build-windows-msix.ps1.
+  # Never commit certificates or their passwords to this file.
   install_certificate: false
-  certificate_path: windows\certs\itse500-dev.pfx
-  certificate_password: itse500-dev
 
