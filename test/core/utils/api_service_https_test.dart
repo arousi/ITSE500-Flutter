@@ -47,6 +47,59 @@ void main() {
     });
   });
 
+  group('ApiService redirect-hop HTTPS re-enforcement', () {
+    // Mirrors the redirect-resolution logic in tryPost/tryGet/tryPatch/
+    // tryDelete: resolve the Location header against the original request
+    // URL, then re-run it through the same choke point used for the
+    // initial request. A redirect to a known prod host over plaintext
+    // http must never be followed as-is.
+    test('upgrades a redirect Location on the prod host to https', () {
+      final original = Uri.parse('https://www.itse500-ok.ly/api/v1/auth_api/'
+          'login/');
+      const location = 'http://www.itse500-ok.ly/api/v1/auth_api/login/';
+      final parsed = Uri.parse(location);
+      var redirectUri =
+          parsed.hasScheme ? parsed : original.resolveUri(parsed);
+      redirectUri = Uri.parse(
+          ApiService.enforceHttpsForKnownProdHostsForTest(
+              redirectUri.toString()));
+
+      expect(redirectUri.scheme, 'https');
+      expect(redirectUri.toString(),
+          'https://www.itse500-ok.ly/api/v1/auth_api/login/');
+    });
+
+    test('upgrades a relative redirect Location resolved onto the prod host',
+        () {
+      final original = Uri.parse('http://www.itse500-ok.ly/api/v1/auth_api/'
+          'login/');
+      const location = '/api/v1/auth_api/token/refresh/';
+      final parsed = Uri.parse(location);
+      var redirectUri =
+          parsed.hasScheme ? parsed : original.resolveUri(parsed);
+      redirectUri = Uri.parse(
+          ApiService.enforceHttpsForKnownProdHostsForTest(
+              redirectUri.toString()));
+
+      expect(redirectUri.scheme, 'https');
+      expect(redirectUri.host, 'www.itse500-ok.ly');
+    });
+
+    test('leaves a redirect Location on a dev host over http', () {
+      final original = Uri.parse('http://127.0.0.1:8000/api/v1/auth_api/'
+          'login/');
+      const location = 'http://127.0.0.1:8000/api/v1/auth_api/token/refresh/';
+      final parsed = Uri.parse(location);
+      var redirectUri =
+          parsed.hasScheme ? parsed : original.resolveUri(parsed);
+      redirectUri = Uri.parse(
+          ApiService.enforceHttpsForKnownProdHostsForTest(
+              redirectUri.toString()));
+
+      expect(redirectUri.scheme, 'http');
+    });
+  });
+
   group('ApiService._normalizeApiBase HTTPS enforcement (base URL builder)',
       () {
     test('normalizes and forces https for a plaintext prod base URL', () {

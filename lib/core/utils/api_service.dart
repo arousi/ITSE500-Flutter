@@ -1526,6 +1526,8 @@ class ApiService {
             try {
               final parsed = Uri.parse(loc);
               redirectUri = parsed.hasScheme ? parsed : url.resolveUri(parsed);
+              redirectUri = Uri.parse(
+                  _enforceHttpsForKnownProdHosts(redirectUri.toString()));
             } catch (_) {
               _logger.w('Invalid redirect location: $loc');
               continue; // try next candidate
@@ -1702,6 +1704,8 @@ class ApiService {
             try {
               final parsed = Uri.parse(loc);
               redirectUri = parsed.hasScheme ? parsed : url.resolveUri(parsed);
+              redirectUri = Uri.parse(
+                  _enforceHttpsForKnownProdHosts(redirectUri.toString()));
             } catch (_) {
               _logger.w('Invalid redirect location: $loc');
               continue;
@@ -1878,6 +1882,8 @@ class ApiService {
             try {
               final parsed = Uri.parse(loc);
               redirectUri = parsed.hasScheme ? parsed : url.resolveUri(parsed);
+              redirectUri = Uri.parse(
+                  _enforceHttpsForKnownProdHosts(redirectUri.toString()));
             } catch (_) {
               _logger.w('Invalid redirect location: $loc');
               continue;
@@ -2056,6 +2062,8 @@ class ApiService {
             try {
               final parsed = Uri.parse(loc);
               redirectUri = parsed.hasScheme ? parsed : url.resolveUri(parsed);
+              redirectUri = Uri.parse(
+                  _enforceHttpsForKnownProdHosts(redirectUri.toString()));
             } catch (_) {
               _logger.w('Invalid redirect location: $loc');
               continue;
