@@ -149,8 +149,8 @@ class BiometricAuthService {
     try {
       final ok = await _auth.authenticate(
         localizedReason: 'Authenticate to enable biometric sign-in',
-        options:
-            const AuthenticationOptions(biometricOnly: true, stickyAuth: true),
+        biometricOnly: true,
+        persistAcrossBackgrounding: true,
       );
       if (ok) {
         final prefs = await SharedPreferences.getInstance();

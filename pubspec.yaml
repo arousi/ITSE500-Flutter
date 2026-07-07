@@ -75,7 +75,7 @@ dependencies:
   file_saver: ^0.3.1
   #flutter_native_splash: ^2.4.1
   google_sign_in: ^6.2.1
-  local_auth: ^2.3.0
+  local_auth: ^3.0.1
   #msal_flutter: ^2.0.1
   googleapis_auth: ^2.3.2
   flutter_appauth: ^9.0.1

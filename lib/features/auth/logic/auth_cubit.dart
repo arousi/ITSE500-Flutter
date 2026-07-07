@@ -735,8 +735,8 @@ class AuthCubit extends Cubit<AuthState> {
           startedAt: DateTime.now(), reason: reason));
       final ok = await _localAuth.authenticate(
         localizedReason: 'Unlock to continue',
-        options:
-            const AuthenticationOptions(biometricOnly: true, stickyAuth: true),
+        biometricOnly: true,
+        persistAcrossBackgrounding: true,
       );
       if (ok) {
         emit(AuthAuthenticated());
