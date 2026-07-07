@@ -54,5 +54,27 @@ void main() {
       final result = logger.redactCtxForTest(ctx);
       expect(result['note'], isNot(contains('sk-embedded-in-a-sentence')));
     });
+
+    test('redacts a Gemini-style ?key= query param embedded in a ctx value',
+        () {
+      final ctx = <String, dynamic>{
+        'url': 'https://generativelanguage.googleapis.com/v1beta/models/'
+            'gemini-pro:generateContent?key=AIzaSyD-realsecretvalue1234',
+      };
+      final result = logger.redactCtxForTest(ctx);
+      expect(
+          result['url'], isNot(contains('AIzaSyD-realsecretvalue1234')));
+    });
+
+    test(
+        'redactStringForTest scrubs a token embedded in an error object\'s '
+        'toString(), as unified_logger.e()/w()/d() do before writing to '
+        'console or the JSONL file', () {
+      final error = Exception(
+          'Upstream call failed: Authorization: Bearer sk-liveTOKEN99887766');
+      final result = logger.redactStringForTest(error.toString());
+      expect(result, isNot(contains('sk-liveTOKEN99887766')));
+      expect(result, contains('Bearer ***'));
+    });
   });
 }

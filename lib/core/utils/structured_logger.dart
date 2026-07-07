@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart' as path_provider;
 import 'package:logger/logger.dart' as rt;
 
+import 'log_redaction.dart';
+
 /// Minimal structured JSONL logger with daily JSONL files and redaction.
 class StructuredLogger {
   StructuredLogger._();
@@ -33,33 +35,15 @@ class StructuredLogger {
     return base;
   }
 
-  Map<String, dynamic> _redact(Map<String, dynamic> m) {
-    const sensitiveKeys = {
-      'authorization',
-      'api_key',
-      'api-key',
-      'x-api-key',
-      'x-goog-api-key',
-      'openai-api-key',
-      'openrouter-api-key',
-      'access_token',
-      'refresh_token',
-    };
-    Map<String, dynamic> out = {};
-    m.forEach((k, v) {
-      if (sensitiveKeys.contains(k.toString().toLowerCase())) {
-        out[k] = '***';
-      } else if (v is Map<String, dynamic>) {
-        out[k] = _redact(v);
-      } else if (v is List) {
-        out[k] =
-            v.map((e) => e is Map<String, dynamic> ? _redact(e) : e).toList();
-      } else {
-        out[k] = v;
-      }
-    });
-    return out;
-  }
+  Map<String, dynamic> _redact(Map<String, dynamic> m) =>
+      LogRedaction.redactMap(m);
+
+  /// Redacts a free-form string value (e.g. the `url` field, which is
+  /// passed as a separate named parameter rather than through [_redact]'s
+  /// map, and can carry a secret in its query string — e.g. Gemini's
+  /// `...?key=<apiKey>`).
+  String? _redactUrl(String? url) =>
+      url == null ? null : LogRedaction.redactString(url);
 
   Future<void> log(
     String event,
@@ -84,6 +68,7 @@ class StructuredLogger {
     try {
       final file = await _resolveFile();
       final redPayload = _redact(payload);
+      final safeUrl = _redactUrl(url);
       final record = {
         'ts': DateTime.now().toIso8601String(),
         'event': event,
@@ -103,7 +88,7 @@ class StructuredLogger {
         if (status != null) 'status': status,
         if (httpStatus != null) 'httpStatus': httpStatus,
         if (durationMs != null) 'durationMs': durationMs,
-        if (url != null) 'url': url,
+        if (safeUrl != null) 'url': safeUrl,
       };
       // Pretty-print a concise line to runtime logs (suppress mirror 'log' noise)
       final isMirrorLog =
@@ -115,7 +100,7 @@ class StructuredLogger {
         final dims = <String, dynamic>{
           if (httpStatus != null) 'http': httpStatus,
           if (durationMs != null) 'ms': durationMs,
-          if (url != null) 'url': url,
+          if (safeUrl != null) 'url': safeUrl,
         };
         final isError = (httpStatus != null && httpStatus >= 400) ||
             status == 'error' ||
