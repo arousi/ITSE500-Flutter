@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_app_itse500/l10n/app_localizations.dart';
 
 class ProfileButton extends StatelessWidget {
   const ProfileButton({super.key});
@@ -8,7 +9,7 @@ class ProfileButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return ElevatedButton.icon(
       icon: const Icon(Icons.person),
-      label: const Text('PROFILE'),
+      label: Text(AppLocalizations.of(context)!.profile.toUpperCase()),
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.grey[700],
         foregroundColor: Colors.white,

@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter_app_itse500/core/models/conversation.dart';
 import 'package:flutter_app_itse500/core/models/message.dart';
 import 'package:flutter_app_itse500/core/models/custom_user.dart';
+import 'package:flutter_app_itse500/core/models/provider_check_status.dart';
 import 'package:flutter_app_itse500/core/utils/api_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -273,6 +274,16 @@ class DataRepository {
   Future<bool> checkOpenRouterKey(String apiKey) =>
       _api.checkOpenRouterKey(apiKey);
   Future<bool> checkGoogleKey(String apiKey) => _api.checkGoogleKey(apiKey);
+
+  // Provider key checks (detailed): distinguish invalid key from a
+  // transient/network failure so the UI can show "Invalid key" vs.
+  // "Unreachable — retry" instead of one generic red state.
+  Future<ProviderCheckStatus> checkOpenAiKeyDetailed(String apiKey) =>
+      _api.checkOpenAiKeyDetailed(apiKey);
+  Future<ProviderCheckStatus> checkOpenRouterKeyDetailed(String apiKey) =>
+      _api.checkOpenRouterKeyDetailed(apiKey);
+  Future<ProviderCheckStatus> checkGoogleKeyDetailed(String apiKey) =>
+      _api.checkGoogleKeyDetailed(apiKey);
 
   // Provider model lists
   Future<List<String>> fetchOpenAIModels(String apiKey,
@@ -699,7 +710,10 @@ class DataRepository {
     try {
       final u = Uri.parse(out);
       final h = u.host.toLowerCase();
-      if (h == 'www.itse500-ok.ly' || h == 'itse500-ok.ly') {
+      if (h == 'www.itse500-ok.ly' ||
+          h == 'itse500-ok.ly' ||
+          h == 'itse500.swe.com.ly' ||
+          h == 'www.itse500.swe.com.ly') {
         return 'https://${u.host}/api/v1/';
       }
     } catch (_) {}
@@ -718,14 +732,26 @@ class DataRepository {
     }
     final uri = Uri.tryParse(norm);
 
-    // Desired priority: website -> localhost (127) -> emulator (10.0.2.2) -> 192.x -> manual -> provided
-    final List<String> ordered = [
-      'https://www.itse500-ok.ly/api/v1/',
-      'https://itse500-ok.ly/api/v1/',
+    // Desired priority: the actually-configured/same-origin base first (so web,
+    // which always resolves to the real host, doesn't waste round-trips on
+    // stale fallbacks) -> production website -> localhost (127) ->
+    // emulator (10.0.2.2) -> 192.x -> manual -> legacy domain (kept as a
+    // last-resort fallback during the itse500-ok.ly -> itse500.swe.com.ly
+    // domain migration).
+    final List<String> ordered = [];
+    if (uri != null && uri.host.isNotEmpty) {
+      final host = uri.host;
+      final hasPort = uri.hasPort;
+      final portPart = hasPort ? ':${uri.port}' : '';
+      ordered.add('${uri.scheme}://$host$portPart/api/v1/');
+    }
+    ordered.addAll([
+      'https://itse500.swe.com.ly/api/v1/',
+      'https://www.itse500.swe.com.ly/api/v1/',
       'http://127.0.0.1:8000/api/v1/',
       'http://10.0.2.2:8000/api/v1/',
       'http://192.168.22.99:8000/api/v1/',
-    ];
+    ]);
 
     // Optional manual hotspot override
     final manual = _cachedHotspotHost;
@@ -733,12 +759,11 @@ class DataRepository {
       ordered.add('http://$manual:8000/api/v1/');
     }
 
-    if (uri != null && uri.host.isNotEmpty) {
-      final host = uri.host;
-      final hasPort = uri.hasPort;
-      final portPart = hasPort ? ':${uri.port}' : '';
-      ordered.add('${uri.scheme}://$host$portPart/api/v1/');
-    }
+    // Legacy domain, kept as a last-resort fallback during migration.
+    ordered.addAll([
+      'https://www.itse500-ok.ly/api/v1/',
+      'https://itse500-ok.ly/api/v1/',
+    ]);
 
     // Deduplicate preserving order
     final seen = <String>{};

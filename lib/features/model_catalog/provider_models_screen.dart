@@ -5,6 +5,7 @@ import 'package:flutter_app_itse500/features/chat/logic/chat_cubit.dart';
 import 'package:flutter_app_itse500/core/utils/design_patterns/repositories/data_repository.dart';
 import 'logic/model_catalog_cubit.dart';
 import 'package:flutter_app_itse500/core/models/model_descriptor.dart';
+import 'package:flutter_app_itse500/l10n/app_localizations.dart';
 
 class ProviderModelsScreen extends StatefulWidget {
   final String provider;
@@ -179,8 +180,9 @@ class _ProviderModelsScreenState extends State<ProviderModelsScreen> {
                                 decoration: BoxDecoration(
                                     color: Colors.orange.shade100,
                                     borderRadius: BorderRadius.circular(4)),
-                                child: const Text('Billing',
-                                    style: TextStyle(
+                                child: Text(
+                                    AppLocalizations.of(context)!.billing,
+                                    style: const TextStyle(
                                         fontSize: 10,
                                         color: Colors.orange,
                                         fontWeight: FontWeight.w600)),
@@ -310,29 +312,31 @@ class _ProviderModelsScreenState extends State<ProviderModelsScreen> {
     required Widget Function(int) itemBuilder,
     required VoidCallback onRefresh,
   }) {
+    final l10n = AppLocalizations.of(context)!;
     if (loading) return const Center(child: CircularProgressIndicator());
-    if (error != null) return Center(child: Text('Error: $error'));
+    if (error != null) return Center(child: Text(l10n.errorPrefix(error)));
     if (empty)
-      return const Center(child: Text('No models data. Fetch models first.'));
+      return Center(child: Text(l10n.noModelsData));
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 8, 4),
+          padding: const EdgeInsetsDirectional.fromSTEB(16, 12, 8, 4),
           child: Row(
             children: [
               Expanded(
-                child: Text('${widget.provider.toUpperCase()} Models',
+                child: Text(
+                    l10n.providerModelsTitle(widget.provider.toUpperCase()),
                     style: Theme.of(context).textTheme.titleMedium),
               ),
               IconButton(
                 onPressed: onRefresh,
-                tooltip: 'Refresh',
+                tooltip: l10n.refresh,
                 icon: const Icon(Icons.refresh, size: 20),
               ),
               IconButton(
                 onPressed: () => launchUrl(Uri.parse(_providerUrl())),
-                tooltip: 'Open docs',
+                tooltip: l10n.openDocs,
                 icon: const Icon(Icons.open_in_new, size: 20),
               ),
             ],
@@ -340,32 +344,32 @@ class _ProviderModelsScreenState extends State<ProviderModelsScreen> {
         ),
         // Filters / Search bar
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+          padding: const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 4),
           child: Column(
             children: [
               TextField(
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                     isDense: true,
-                    prefixIcon: Icon(Icons.search),
-                    hintText: 'Search models'),
+                    prefixIcon: const Icon(Icons.search),
+                    hintText: l10n.searchModels),
                 onChanged: (v) => setState(() => _search = v.trim()),
               ),
               const SizedBox(height: 4),
               Wrap(spacing: 8, runSpacing: 4, children: [
                 FilterChip(
-                    label: const Text('Chat'),
+                    label: Text(l10n.chat),
                     selected: _showChat,
                     onSelected: (v) => setState(() => _showChat = v)),
                 FilterChip(
-                    label: const Text('Embeddings'),
+                    label: Text(l10n.embeddings),
                     selected: _showEmbeddings,
                     onSelected: (v) => setState(() => _showEmbeddings = v)),
                 FilterChip(
-                    label: const Text('Image / Vision'),
+                    label: Text(l10n.imageVision),
                     selected: _showImage,
                     onSelected: (v) => setState(() => _showImage = v)),
                 FilterChip(
-                    label: const Text('Billing Required'),
+                    label: Text(l10n.billingRequired),
                     selected: _showBillingOnly,
                     onSelected: (v) => setState(() => _showBillingOnly = v)),
               ]),
@@ -374,9 +378,9 @@ class _ProviderModelsScreenState extends State<ProviderModelsScreen> {
         ),
         if (updatedAt != null)
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+            padding: const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 4),
             child: Text(
-              'Last update: ${updatedAt.toUtc().toIso8601String()}',
+              l10n.lastUpdate(updatedAt.toUtc().toIso8601String()),
               style: Theme.of(context)
                   .textTheme
                   .labelSmall

@@ -18,6 +18,8 @@ import 'package:flutter_app_itse500/features/auth/logic/auth_cubit.dart';
 import '../../../../core/widgets/otp_pinput.dart';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
+import 'package:flutter_app_itse500/core/utils/responsive.dart';
+import 'package:flutter_app_itse500/l10n/app_localizations.dart';
 // Removed ApiKeySection & AuthenticationOptions in refactored visitor/unverified views
 // import 'dart:convert';
 
@@ -80,7 +82,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 );
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Profile update requested.')),
+                SnackBar(
+                    content: Text(
+                        AppLocalizations.of(context)!.profileUpdateRequested)),
               );
             }
           } catch (_) {}
@@ -126,10 +130,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _openVerifyEmailDialog({required bool isReset}) async {
     final profileCubit = context.read<ProfileCubit>();
+    final l10n = AppLocalizations.of(context)!;
     final email = emailController.text.trim();
     if (email.isEmpty) {
       ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Enter email first')));
+          .showSnackBar(SnackBar(content: Text(l10n.enterEmailFirst)));
       return;
     }
     verificationCodeController.clear();
@@ -151,7 +156,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               if (pw.isNotEmpty) {
                 if (pw != cpw) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Passwords do not match')));
+                      SnackBar(content: Text(l10n.passwordsDoNotMatch)));
                   return;
                 }
                 final hashed = sha256.convert(utf8.encode(pw)).toString();
@@ -189,26 +194,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   });
                   otpKey.currentState?.showSuccess();
                   ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Email verified')));
+                      SnackBar(content: Text(l10n.emailVerifiedSnackbar)));
                 } else if (!isReset && pState is ProfileError && verifying) {
                   setStateDialog(() {
                     verifying = false;
                     verified = false;
                   });
                   otpKey.currentState?.showError();
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                      content: Text('Verification failed, try again')));
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text(l10n.verificationFailedTryAgain)));
                 }
               },
               child: AlertDialog(
-                title: Text(isReset ? 'Reset Password' : 'Verify Email'),
+                title: Text(isReset ? l10n.resetPassword : l10n.verifyEmail),
                 content: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const SizedBox(height: 8),
                       // Always show PIN input; disabled when resetting password (bypassed)
-                      const Text('Confirmation Code'),
+                      Text(l10n.confirmationCode),
                       const SizedBox(height: 8),
                       OtpPinput(
                         key: otpKey,
@@ -219,17 +224,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       if (!isReset && verifying)
                         const Padding(
-                          padding: EdgeInsets.only(top: 8.0),
+                          padding: EdgeInsetsDirectional.only(top: 8.0),
                           child: SizedBox(
                               width: 28,
                               height: 28,
                               child: CircularProgressIndicator(strokeWidth: 2)),
                         ),
                       if (isReset)
-                        const Padding(
-                          padding: EdgeInsets.only(top: 6.0),
-                          child: Text(
-                              'PIN entry is disabled for password reset (bypassed).'),
+                        Padding(
+                          padding: const EdgeInsetsDirectional.only(top: 6.0),
+                          child: Text(l10n.pinDisabledForReset),
                         ),
                       const SizedBox(height: 16),
                       AnimatedOpacity(
@@ -243,29 +247,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 TextField(
                                   controller: passwordController,
                                   obscureText: true,
-                                  decoration: const InputDecoration(
-                                      labelText: 'Password (optional)'),
+                                  decoration: InputDecoration(
+                                      labelText: l10n.passwordOptional),
                                 ),
                                 const SizedBox(height: 12),
                                 TextField(
                                   controller: confirmPasswordController,
                                   obscureText: true,
-                                  decoration: const InputDecoration(
-                                      labelText: 'Confirm Password'),
+                                  decoration: InputDecoration(
+                                      labelText: l10n.confirmPassword),
                                 ),
                               ] else ...[
                                 TextField(
                                   controller: passwordController,
                                   obscureText: true,
-                                  decoration: const InputDecoration(
-                                      labelText: 'New Password'),
+                                  decoration:
+                                      InputDecoration(labelText: l10n.newPassword),
                                 ),
                                 const SizedBox(height: 12),
                                 TextField(
                                   controller: confirmPasswordController,
                                   obscureText: true,
-                                  decoration: const InputDecoration(
-                                      labelText: 'Confirm New Password'),
+                                  decoration: InputDecoration(
+                                      labelText: l10n.confirmNewPassword),
                                 ),
                               ],
                             ],
@@ -274,10 +278,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       if (!isReset && !verified)
                         Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
+                          padding: const EdgeInsetsDirectional.only(top: 8.0),
                           child: Text(verifying
-                              ? 'Verifying code...'
-                              : 'Enter the 5-digit code sent to your email. Password fields unlock after verification.'),
+                              ? l10n.verifyingCode
+                              : l10n.enterFiveDigitCode),
                         ),
                     ],
                   ),
@@ -285,14 +289,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.of(ctx).pop(),
-                    child: const Text('Cancel'),
+                    child: Text(l10n.cancel),
                   ),
                   if (verified)
                     TextButton(
                       onPressed: () async {
                         await attemptPasswordSetIfProvided();
                       },
-                      child: Text(isReset ? 'Reset' : 'Save'),
+                      child: Text(isReset ? l10n.resetButton : l10n.save),
                     ),
                 ],
               ),
@@ -576,9 +580,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     border: Border.all(color: Colors.orange),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Text(
-                    'Your email isn\'t verified yet. Verify to enable editing.',
-                    style: TextStyle(
+                  child: Text(
+                    AppLocalizations.of(context)!.emailNotVerifiedYet,
+                    style: const TextStyle(
                         color: Colors.orange, fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -608,24 +612,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
             mainProfileSection =
                 const Center(child: CircularProgressIndicator());
           } else if (state is ProfileArchived) {
-            mainProfileSection = const Center(
-                child: Text('Account archived. Redirecting to login...'));
+            mainProfileSection = Center(
+                child: Text(
+                    AppLocalizations.of(context)!.accountArchivedRedirecting));
           } else if (state is ProfileDeleted) {
-            mainProfileSection = const Center(
-                child: Text('Account deleted. Redirecting to login...'));
+            mainProfileSection = Center(
+                child: Text(
+                    AppLocalizations.of(context)!.accountDeletedRedirecting));
           } else if (state is ProfileLoggedOut) {
-            mainProfileSection = const Center(
-                child: Text('Logged out. Redirecting to login...'));
+            mainProfileSection = Center(
+                child: Text(
+                    AppLocalizations.of(context)!.loggedOutRedirecting));
           } else {
-            mainProfileSection = const Center(child: Text('Unknown state'));
+            mainProfileSection = Center(
+                child: Text(AppLocalizations.of(context)!.unknownState));
           }
           return Stack(
             children: [
               Padding(
-                padding: const EdgeInsets.only(bottom: 220),
+                padding: const EdgeInsetsDirectional.only(bottom: 220),
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(16.0),
-                  child: Column(
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                          maxWidth: context.isDesktop ? 720 : double.infinity),
+                      child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       mainProfileSection,
@@ -639,7 +651,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8.0, vertical: 4),
                             child: Align(
-                              alignment: Alignment.centerLeft,
+                              alignment: AlignmentDirectional.centerStart,
                               child: TextButton.icon(
                                 onPressed: () =>
                                     _openVerifyEmailDialog(isReset: true),
@@ -680,6 +692,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       // LM Studio configuration now unified inside ApiKeySection via ProviderConfigBlock.
                       const SizedBox(height: 120),
                     ],
+                      ),
+                    ),
                   ),
                 ),
               ),

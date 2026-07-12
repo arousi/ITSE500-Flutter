@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../logic/profile_cubit.dart';
+import 'package:flutter_app_itse500/l10n/app_localizations.dart';
 
 class ProfileForm extends StatefulWidget {
   final GlobalKey<FormState> formKey;
@@ -60,6 +61,7 @@ class _ProfileFormState extends State<ProfileForm> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final border =
         RoundedRectangleBorder(borderRadius: BorderRadius.circular(12));
     return Card(
@@ -67,15 +69,15 @@ class _ProfileFormState extends State<ProfileForm> {
       color: theme.cardColor,
       shape: border,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
+        padding: const EdgeInsetsDirectional.fromSTEB(16, 20, 16, 12),
         child: Form(
           key: widget.formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.only(bottom: 12.0),
-                child: Text('Personal Information',
+                padding: const EdgeInsetsDirectional.only(bottom: 12.0),
+                child: Text(l10n.personalInformation,
                     style: theme.textTheme.titleMedium
                         ?.copyWith(fontWeight: FontWeight.w600)),
               ),
@@ -86,11 +88,11 @@ class _ProfileFormState extends State<ProfileForm> {
                       controller: widget.usernameController,
                       focusNode: widget.usernameFocusNode,
                       enabled: widget.isEditable && !widget.disabled,
-                      decoration: const InputDecoration(
-                          labelText: 'Username',
-                          prefixIcon: Icon(Icons.person)),
+                      decoration: InputDecoration(
+                          labelText: l10n.username,
+                          prefixIcon: const Icon(Icons.person)),
                       validator: (value) => (value == null || value.isEmpty)
-                          ? 'Enter username'
+                          ? l10n.enterUsername
                           : null,
                     ),
                   ),
@@ -100,17 +102,17 @@ class _ProfileFormState extends State<ProfileForm> {
                       controller: widget.serverUuidController,
                       enabled: widget.isEditable && !widget.disabled,
                       decoration: InputDecoration(
-                        labelText: 'Server UUID',
+                        labelText: l10n.serverUuid,
                         suffixIcon: IconButton(
                           icon: const Icon(Icons.copy),
-                          tooltip: 'Copy',
+                          tooltip: l10n.copy,
                           onPressed: () {
                             final v = widget.serverUuidController?.text ?? '';
                             if (v.isNotEmpty) {
                               Clipboard.setData(ClipboardData(text: v));
                               ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text('Server UUID copied')));
+                                  SnackBar(
+                                      content: Text(l10n.copiedToClipboard)));
                             }
                           },
                         ),
@@ -125,7 +127,7 @@ class _ProfileFormState extends State<ProfileForm> {
                 focusNode: widget.emailFocusNode,
                 enabled: widget.isEditable && !widget.disabled,
                 decoration: InputDecoration(
-                  labelText: 'Email',
+                  labelText: l10n.email,
                   prefixIcon: const Icon(Icons.email),
                   suffixIcon: Icon(
                       widget.emailVerified ? Icons.check_circle : Icons.cancel,
@@ -137,11 +139,11 @@ class _ProfileFormState extends State<ProfileForm> {
                   widget.onVerifyEmailPressed != null) ...[
                 const SizedBox(height: 8),
                 Align(
-                  alignment: Alignment.centerLeft,
+                  alignment: AlignmentDirectional.centerStart,
                   child: OutlinedButton.icon(
                     onPressed: widget.onVerifyEmailPressed,
                     icon: const Icon(Icons.verified),
-                    label: const Text('Verify Email'),
+                    label: Text(l10n.verifyEmail),
                   ),
                 ),
               ],
@@ -151,7 +153,7 @@ class _ProfileFormState extends State<ProfileForm> {
                   controller: widget.phoneController,
                   enabled: widget.isEditable && !widget.disabled,
                   decoration: InputDecoration(
-                    labelText: 'Phone Number',
+                    labelText: l10n.phoneNumber,
                     prefixIcon: const Icon(Icons.phone),
                     suffixIcon: Icon(
                         widget.profileEmailVerified
@@ -182,7 +184,7 @@ class _ProfileFormState extends State<ProfileForm> {
                                 }
                               })
                           : null,
-                      label: const Text('Save Changes'),
+                      label: Text(l10n.saveChanges),
                     ),
                   ),
                   if (widget.onRegisterPressed != null) ...[
@@ -191,7 +193,7 @@ class _ProfileFormState extends State<ProfileForm> {
                       child: FilledButton.icon(
                         icon: const Icon(Icons.person_add),
                         onPressed: widget.onRegisterPressed,
-                        label: const Text('Register & Keep Data'),
+                        label: Text(l10n.registerAndKeepData),
                       ),
                     ),
                   ],

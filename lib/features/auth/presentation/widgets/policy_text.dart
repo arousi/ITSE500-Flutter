@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app_itse500/l10n/app_localizations.dart';
 
 class PolicyText extends StatelessWidget {
   const PolicyText({super.key});
@@ -7,7 +8,7 @@ class PolicyText extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
       child: Text(
-        'By Continuing you adhere to Privacy Policy and Terms of Service',
+        AppLocalizations.of(context)!.policyText,
         textAlign: TextAlign.center,
         style: Theme.of(context).textTheme.bodySmall,
       ),

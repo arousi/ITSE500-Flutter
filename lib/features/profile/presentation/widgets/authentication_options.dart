@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../auth/logic/auth_cubit.dart';
 import '../../../auth/logic/auth_providers.dart';
 import '../../../profile/logic/profile_cubit.dart';
+import 'package:flutter_app_itse500/l10n/app_localizations.dart';
 
 class AuthenticationOptions extends StatefulWidget {
   final bool isEditable;
@@ -119,13 +120,14 @@ class _AuthenticationOptionsState extends State<AuthenticationOptions> {
       final types = await _biometricService.availableTypes();
       if (!can) {
         success = false;
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Biometric not supported on device')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content:
+                Text(AppLocalizations.of(context)!.biometricNotSupportedDevice)));
       } else if (types.isEmpty) {
         success = false;
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text(
-                'No biometrics enrolled. Add fingerprint/face in system settings first.')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content:
+                Text(AppLocalizations.of(context)!.noBiometricsEnrolled)));
       } else {
         success = await _biometricService.authenticate();
       }
@@ -143,13 +145,15 @@ class _AuthenticationOptionsState extends State<AuthenticationOptions> {
       if (mounted)
         context.read<AuthCubit>().applyBiometricPreferenceChanged(value);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Biometric auth failed or unavailable')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content:
+              Text(AppLocalizations.of(context)!.biometricAuthFailed)));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return BlocListener<AuthCubit, AuthState>(
       listener: (context, state) async {
         // On OAuth success, enable and persist the specific provider toggle.
@@ -186,8 +190,9 @@ class _AuthenticationOptionsState extends State<AuthenticationOptions> {
             });
             await _saveAuthOption('google_auth_enabled', false);
             if (mounted)
-              ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Google sign-in failed')));
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text(
+                      AppLocalizations.of(context)!.googleSignInFailed)));
           } else if (state.provider == 'microsoft') {
             setState(() {
               msAuthEnabled = false;
@@ -195,8 +200,9 @@ class _AuthenticationOptionsState extends State<AuthenticationOptions> {
             });
             await _saveAuthOption('ms_auth_enabled', false);
             if (mounted)
-              ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Microsoft sign-in failed')));
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text(
+                      AppLocalizations.of(context)!.microsoftSignInFailed)));
           } else if (state.provider == 'openrouter') {
             setState(() {
               openRouterEnabled = false;
@@ -204,8 +210,9 @@ class _AuthenticationOptionsState extends State<AuthenticationOptions> {
             });
             await _saveAuthOption('openrouter_auth_enabled', false);
             if (mounted)
-              ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('OpenRouter sign-in failed')));
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text(
+                      AppLocalizations.of(context)!.openRouterSignInFailed)));
           }
         } else if (state is AuthAuthenticated) {
           // After auth state settles, re-load flags from SharedPreferences in case listener missed success
@@ -215,9 +222,9 @@ class _AuthenticationOptionsState extends State<AuthenticationOptions> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Authentication', style: Theme.of(context).textTheme.titleLarge),
+          Text(l10n.authentication, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
-          Text('OAuth Providers',
+          Text(l10n.oauthProviders,
               style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 4),
           Card(
@@ -225,21 +232,21 @@ class _AuthenticationOptionsState extends State<AuthenticationOptions> {
               children: [
                 _AuthSwitch(
                   title: 'OpenRouter',
-                  subtitle: 'Enable to show OpenRouter Sign-In on login screen',
+                  subtitle: l10n.enableOpenRouterSignIn,
                   value: openRouterEnabled,
                   loading: _loading.contains('openrouter'),
                   onChanged: widget.isEditable ? _handleOpenRouterAuth : null,
                 ),
                 _AuthSwitch(
                   title: 'Google',
-                  subtitle: 'Enable to show Google Sign-In on login screen',
+                  subtitle: l10n.enableGoogleSignIn,
                   value: googleEnabled,
                   loading: _loading.contains('google'),
                   onChanged: widget.isEditable ? _handleGoogleAuth : null,
                 ),
                 _AuthSwitch(
                   title: 'Microsoft',
-                  subtitle: 'Enable to show Microsoft Sign-In on login screen',
+                  subtitle: l10n.enableMicrosoftSignIn,
                   value: msAuthEnabled,
                   loading: _loading.contains('ms'),
                   onChanged: widget.isEditable ? _handleMsAuth : null,
@@ -248,23 +255,22 @@ class _AuthenticationOptionsState extends State<AuthenticationOptions> {
             ),
           ),
           const SizedBox(height: 12),
-          Text('Device Security',
+          Text(l10n.deviceSecurity,
               style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 4),
           Card(
             child: Column(
               children: [
                 if (!biometricSupported)
-                  const ListTile(
-                    leading: Icon(Icons.fingerprint, color: Colors.grey),
-                    title: Text('Biometric not available'),
-                    subtitle: Text(
-                        'Your device does not support biometric authentication'),
+                  ListTile(
+                    leading: const Icon(Icons.fingerprint, color: Colors.grey),
+                    title: Text(l10n.biometricNotAvailable),
+                    subtitle: Text(l10n.biometricNotSupportedBody),
                   )
                 else
                   _AuthSwitch(
-                    title: 'Biometric Authentication',
-                    subtitle: 'Require fingerprint/face to unlock after login',
+                    title: l10n.biometricAuthentication,
+                    subtitle: l10n.requireBiometricUnlock,
                     value: biometricEnabled,
                     loading: _loading.contains('biometric'),
                     onChanged: widget.isEditable ? _handleBiometricAuth : null,

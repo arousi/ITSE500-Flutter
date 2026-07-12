@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../features/auth/logic/auth_cubit.dart';
+import '../../l10n/app_localizations.dart';
 
 // Controllers for form fields.
 
@@ -67,9 +68,9 @@ class EmailField extends StatelessWidget {
       controller: controller,
       focusNode: focusNode,
       decoration: decoration ??
-          const InputDecoration(
-            labelText: 'Email',
-            prefixIcon: Icon(Icons.email_outlined),
+          InputDecoration(
+            labelText: AppLocalizations.of(context)!.email,
+            prefixIcon: const Icon(Icons.email_outlined),
           ),
       validator: validateEmail,
       keyboardType: TextInputType.emailAddress,
@@ -100,10 +101,13 @@ class _PasswordFieldState extends State<PasswordField> {
       controller: widget.controller,
       focusNode: widget.focusNode,
       decoration: InputDecoration(
-        labelText: 'Password',
+        labelText: AppLocalizations.of(context)!.password,
         prefixIcon: const Icon(Icons.lock_outline),
         // borders/fill from theme
         suffixIcon: IconButton(
+          tooltip: _obscureText
+              ? AppLocalizations.of(context)!.showPassword
+              : AppLocalizations.of(context)!.hidePassword,
           icon: Icon(_obscureText ? Icons.visibility_off : Icons.visibility),
           onPressed: () => setState(() => _obscureText = !_obscureText),
         ),
@@ -136,10 +140,13 @@ class _ConfirmPasswordFieldState extends State<ConfirmPasswordField> {
       controller: widget.controller,
       focusNode: widget.focusNode,
       decoration: InputDecoration(
-        labelText: 'Confirm Password',
+        labelText: AppLocalizations.of(context)!.confirmPassword,
         prefixIcon: const Icon(Icons.lock_outline),
         // borders/fill from theme
         suffixIcon: IconButton(
+          tooltip: _obscureText
+              ? AppLocalizations.of(context)!.showPassword
+              : AppLocalizations.of(context)!.hidePassword,
           icon: Icon(_obscureText ? Icons.visibility_off : Icons.visibility),
           onPressed: () => setState(() => _obscureText = !_obscureText),
         ),
@@ -171,9 +178,9 @@ class UserNameField extends StatelessWidget {
       controller: controller,
       focusNode: focusNode,
       decoration: decoration ??
-          const InputDecoration(
-            labelText: 'Username',
-            prefixIcon: Icon(Icons.person_outline),
+          InputDecoration(
+            labelText: AppLocalizations.of(context)!.username,
+            prefixIcon: const Icon(Icons.person_outline),
           ),
       validator: (value) {
         if (value == null || value.isEmpty) {
@@ -192,12 +199,12 @@ class UserNameField extends StatelessWidget {
 
 /// Reusable button widget for guest login
 class ContinueAsGuestButton extends StatelessWidget {
-  final String label;
+  final String? label;
   final Color backgroundColor;
   final IconData icon;
   const ContinueAsGuestButton({
     super.key,
-    this.label = 'CONTINUE AS GUEST',
+    this.label,
     this.backgroundColor = const Color(0xFF616161),
     this.icon = Icons.mic,
   });
@@ -215,7 +222,10 @@ class ContinueAsGuestButton extends StatelessWidget {
           ),
         ),
         icon: Icon(icon, color: Colors.white),
-        label: Text(label, style: const TextStyle(color: Colors.white)),
+        label: Text(
+            (label ?? AppLocalizations.of(context)!.continueAsGuest)
+                .toUpperCase(),
+            style: const TextStyle(color: Colors.white)),
         onPressed: () async {
           context.read<AuthCubit>().continueAsGuest(context);
         },
@@ -232,7 +242,7 @@ class PrivacyPolicyText extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
       child: Text(
-        'By Continuing you adhere to Privacy Policy and Terms of Service',
+        AppLocalizations.of(context)!.policyText,
         textAlign: TextAlign.center,
         style: Theme.of(context).textTheme.bodySmall,
       ),

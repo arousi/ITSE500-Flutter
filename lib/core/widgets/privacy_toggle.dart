@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app_itse500/shared_preferences.dart';
 import 'package:flutter_app_itse500/core/theme/app_theme.dart';
+import 'package:flutter_app_itse500/l10n/app_localizations.dart';
 
 /// Reusable privacy toggle that controls global storage mode.
 /// - local  => Private (on-device only)
 /// - mixed  => Mixed (eligible for sync)
 class PrivacyToggle extends StatefulWidget {
   final bool showLabel;
-  final EdgeInsets labelPadding;
+  final EdgeInsetsGeometry labelPadding;
   final void Function(String mode)? onChanged;
   const PrivacyToggle(
       {super.key,
       this.showLabel = true,
-      this.labelPadding = const EdgeInsets.only(right: 8),
+      this.labelPadding = const EdgeInsetsDirectional.only(end: 8),
       this.onChanged});
 
   @override
@@ -48,7 +49,8 @@ class _PrivacyToggleState extends State<PrivacyToggle> {
     final palette = Theme.of(context).extension<AppPalette>();
     final Color iconColor =
         palette?.primary ?? Theme.of(context).colorScheme.primary;
-    final label = isPrivate ? 'Private' : 'Mixed';
+    final l10n = AppLocalizations.of(context)!;
+    final label = isPrivate ? l10n.privateLabel : l10n.mixedLabel;
     final bool onDark = Theme.of(context).appBarTheme.backgroundColor != null
         ? (Theme.of(context).appBarTheme.backgroundColor!.computeLuminance() <
             0.5)
@@ -58,7 +60,7 @@ class _PrivacyToggleState extends State<PrivacyToggle> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Padding(
-          padding: const EdgeInsets.only(right: 6),
+          padding: const EdgeInsetsDirectional.only(end: 6),
           child: Icon(icon, color: iconColor),
         ),
         Switch.adaptive(

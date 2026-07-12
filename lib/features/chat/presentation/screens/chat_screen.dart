@@ -10,6 +10,7 @@ import 'package:flutter_app_itse500/features/chat/widgets/message_input.dart';
 import '../../../chat/logic/chat_state.dart';
 import 'package:flutter_app_itse500/core/widgets/toaster.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_app_itse500/l10n/app_localizations.dart';
 // inference settings import already present above
 
 class ChatScreen extends StatefulWidget {
@@ -77,8 +78,8 @@ class _ChatScreenState extends State<ChatScreen> {
     final key = await chatCubit.getApiKey(_selectedProvider);
     final hasKey = key != null && key.isNotEmpty;
     if (!(isEnabled && isConnected && hasKey)) {
-      Toaster.show(context,
-          'Selected provider is disabled or not configured. Enable it in Config/Profile.');
+      Toaster.show(
+          context, AppLocalizations.of(context)!.providerDisabledWarning);
       return;
     }
     final requestId = DateTime.now().millisecondsSinceEpoch.toString();
@@ -251,20 +252,27 @@ class _ChatScreenState extends State<ChatScreen> {
                     });
                     Toaster.show(context, state.error);
                   } else if (state is ChatGeneratingImage) {
-                    Toaster.show(context, 'Generating image…');
+                    Toaster.show(
+                        context, AppLocalizations.of(context)!.generatingImage);
                   } else if (state is ChatImageGenerated) {
-                    Toaster.show(context, 'Image generated');
+                    Toaster.show(
+                        context, AppLocalizations.of(context)!.imageGenerated);
                   } else if (state is ChatGeneratingEmbedding) {
-                    Toaster.show(context, 'Generating embedding…');
+                    Toaster.show(context,
+                        AppLocalizations.of(context)!.generatingEmbedding);
                   } else if (state is ChatEmbeddingGenerated) {
                     Toaster.show(
-                        context, 'Embedding generated (${state.dims} dims)');
+                        context,
+                        AppLocalizations.of(context)!
+                            .embeddingGenerated(state.dims));
                   }
                 },
                 child: Stack(
                   children: [
                     if (_messages.isEmpty)
-                      const Center(child: Text('No messages yet'))
+                      Center(
+                          child: Text(
+                              AppLocalizations.of(context)!.noMessagesYet))
                     else
                       ListView.builder(
                         controller: _scrollController,
@@ -276,11 +284,11 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                     // Go Down button
                     if (_showGoDown)
-                      Positioned(
-                        right: 16,
+                      PositionedDirectional(
+                        end: 16,
                         bottom: 16,
                         child: FloatingActionButton.small(
-                          tooltip: 'Go to latest',
+                          tooltip: AppLocalizations.of(context)!.goToLatest,
                           onPressed: () => _scrollToBottom(animated: true),
                           child: const Icon(Icons.arrow_downward),
                         ),

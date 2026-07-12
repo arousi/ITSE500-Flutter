@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_app_itse500/features/chat/logic/chat_cubit.dart';
 import 'package:flutter_app_itse500/features/chat_inference/logic/inference_settings_cubit.dart';
+import 'package:flutter_app_itse500/l10n/app_localizations.dart';
 
 class ConfigureDialog extends StatefulWidget {
   const ConfigureDialog({super.key});
@@ -28,6 +29,7 @@ class _ConfigureDialogState extends State<ConfigureDialog> {
       ...chatCubit.providerConnected.keys,
     };
     final providers = providerSet.toList()..sort();
+    final l10n = AppLocalizations.of(context)!;
 
     String displayName(String key) {
       switch (key) {
@@ -53,19 +55,20 @@ class _ConfigureDialogState extends State<ConfigureDialog> {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxHeight: 620, minWidth: 420),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+          padding: const EdgeInsetsDirectional.fromSTEB(12, 12, 12, 8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Configuration',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              Text(l10n.configuration,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 16)),
               const SizedBox(height: 4),
               Expanded(
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
                       _section(
-                        title: 'Providers',
+                        title: l10n.providersLabel,
                         icon: Icons.dns_outlined,
                         expanded: _providersExpanded,
                         onToggle: () => setState(() {
@@ -78,10 +81,12 @@ class _ConfigureDialogState extends State<ConfigureDialog> {
                           }
                         }),
                         child: providers.isEmpty
-                            ? const Padding(
-                                padding: EdgeInsets.symmetric(vertical: 8.0),
-                                child: Text('No providers available',
-                                    style: TextStyle(color: Colors.redAccent)),
+                            ? Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 8.0),
+                                child: Text(l10n.noProvidersAvailable,
+                                    style: const TextStyle(
+                                        color: Colors.redAccent)),
                               )
                             : Column(
                                 children: providers.map((provider) {
@@ -146,8 +151,10 @@ class _ConfigureDialogState extends State<ConfigureDialog> {
                                                 ScaffoldMessenger.of(context)
                                                     .showSnackBar(
                                                   SnackBar(
-                                                      content: Text(
-                                                          'Add API key for ${displayName(provider)} in Profile screen.')),
+                                                      content: Text(l10n
+                                                          .addApiKeyInProfile(
+                                                              displayName(
+                                                                  provider)))),
                                                 );
                                               }
                                             } else {
@@ -165,7 +172,7 @@ class _ConfigureDialogState extends State<ConfigureDialog> {
                               ),
                       ),
                       _section(
-                        title: 'Settings',
+                        title: l10n.settings,
                         icon: Icons.settings_outlined,
                         expanded: _settingsExpanded,
                         onToggle: () => setState(() {
@@ -183,7 +190,7 @@ class _ConfigureDialogState extends State<ConfigureDialog> {
                             const SizedBox(height: 8),
                             _buildSliderToggle(
                               context: context,
-                              label: 'Temperature',
+                              label: l10n.temperature,
                               use: state.useTemperature,
                               value: state.temperature,
                               min: 0.0,
@@ -206,8 +213,8 @@ class _ConfigureDialogState extends State<ConfigureDialog> {
                                       MaterialTapTargetSize.shrinkWrap,
                                 ),
                                 const SizedBox(width: 4),
-                                const Text('Limit Response Length',
-                                    style: TextStyle(
+                                Text(l10n.limitResponseLength,
+                                    style: const TextStyle(
                                         fontSize: 11,
                                         fontWeight: FontWeight.w600)),
                               ],
@@ -216,7 +223,7 @@ class _ConfigureDialogState extends State<ConfigureDialog> {
                         ),
                       ),
                       _section(
-                        title: 'Sampling',
+                        title: l10n.sampling,
                         icon: Icons.tune_outlined,
                         expanded: _samplingExpanded,
                         onToggle: () => setState(() {
@@ -232,7 +239,7 @@ class _ConfigureDialogState extends State<ConfigureDialog> {
                           children: [
                             _buildSliderToggle(
                               context: context,
-                              label: 'Top K',
+                              label: l10n.topK,
                               use: state.useTopK,
                               value: state.topK,
                               min: 1,
@@ -247,7 +254,7 @@ class _ConfigureDialogState extends State<ConfigureDialog> {
                             ),
                             _buildSliderToggle(
                               context: context,
-                              label: 'Repeat Penalty',
+                              label: l10n.repeatPenalty,
                               use: state.useRepeatPenalty,
                               value: state.repeatPenalty,
                               min: 0.5,
@@ -262,7 +269,7 @@ class _ConfigureDialogState extends State<ConfigureDialog> {
                             ),
                             _buildSliderToggle(
                               context: context,
-                              label: 'Min P',
+                              label: l10n.minP,
                               use: state.useMinP,
                               value: state.minP,
                               min: 0.0,
@@ -277,7 +284,7 @@ class _ConfigureDialogState extends State<ConfigureDialog> {
                             ),
                             _buildSliderToggle(
                               context: context,
-                              label: 'Top P',
+                              label: l10n.topP,
                               use: state.useTopP,
                               value: state.topP,
                               min: 0.0,
@@ -294,7 +301,7 @@ class _ConfigureDialogState extends State<ConfigureDialog> {
                         ),
                       ),
                       _section(
-                        title: 'Structured Output',
+                        title: l10n.structuredOutput,
                         icon: Icons.data_object_outlined,
                         expanded: _structuredExpanded,
                         onToggle: () => setState(() {
@@ -318,7 +325,7 @@ class _ConfigureDialogState extends State<ConfigureDialog> {
                 children: [
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Close'),
+                    child: Text(l10n.close),
                   ),
                   const SizedBox(width: 8),
                   FilledButton(
@@ -356,7 +363,7 @@ class _ConfigureDialogState extends State<ConfigureDialog> {
                           value: state.structuredSchema);
                       if (mounted) Navigator.of(context).pop();
                     },
-                    child: const Text('Save'),
+                    child: Text(l10n.save),
                   ),
                 ],
               ),
@@ -396,7 +403,7 @@ class _ConfigureDialogState extends State<ConfigureDialog> {
                 expanded ? CrossFadeState.showFirst : CrossFadeState.showSecond,
             duration: const Duration(milliseconds: 180),
             firstChild: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              padding: const EdgeInsetsDirectional.fromSTEB(12, 0, 12, 12),
               child: child,
             ),
             secondChild: const SizedBox.shrink(),
@@ -420,9 +427,10 @@ class _ConfigureDialogState extends State<ConfigureDialog> {
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
             const SizedBox(width: 4),
-            const Expanded(
-              child: Text('System Prompt',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+            Expanded(
+              child: Text(AppLocalizations.of(context)!.systemPrompt,
+                  style: const TextStyle(
+                      fontSize: 12, fontWeight: FontWeight.w600)),
             ),
           ],
         ),
@@ -433,10 +441,9 @@ class _ConfigureDialogState extends State<ConfigureDialog> {
             enabled: state.useSystemPrompt,
             maxLines: 3,
             minLines: 1,
-            decoration: const InputDecoration(
-              hintText:
-                  'Enter a persistent system instruction (e.g., You are a helpful assistant...)',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              hintText: AppLocalizations.of(context)!.systemPromptHint,
+              border: const OutlineInputBorder(),
               isDense: true,
             ),
             controller: TextEditingController(text: state.systemPrompt),
@@ -463,9 +470,11 @@ class _ConfigureDialogState extends State<ConfigureDialog> {
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
             const SizedBox(width: 4),
-            const Expanded(
-              child: Text('Structured Output (JSON Schema)',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+            Expanded(
+              child: Text(
+                  AppLocalizations.of(context)!.structuredOutputJsonSchema,
+                  style: const TextStyle(
+                      fontSize: 12, fontWeight: FontWeight.w600)),
             ),
           ],
         ),

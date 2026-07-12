@@ -138,8 +138,8 @@ class ModelGroupList extends StatelessWidget {
                 ),
                 children: [
                   Padding(
-                    padding:
-                        const EdgeInsets.only(left: 8, right: 8, bottom: 8),
+                    padding: const EdgeInsetsDirectional.only(
+                        start: 8, end: 8, bottom: 8),
                     child: Wrap(
                       spacing: 6,
                       runSpacing: -4,
@@ -177,8 +177,8 @@ class ModelGroupList extends StatelessWidget {
                   ),
                   // Optional capability badges row
                   Padding(
-                    padding:
-                        const EdgeInsets.only(left: 12, right: 12, bottom: 8),
+                    padding: const EdgeInsetsDirectional.only(
+                        start: 12, end: 12, bottom: 8),
                     child: Wrap(
                       spacing: 4,
                       runSpacing: -6,

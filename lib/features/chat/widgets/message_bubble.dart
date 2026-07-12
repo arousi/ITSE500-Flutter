@@ -16,6 +16,7 @@ import 'package:flutter_app_itse500/core/widgets/toaster.dart';
 import 'package:flutter_app_itse500/core/utils/crypto/artifact_encryptor.dart';
 import 'dart:convert';
 import 'package:flutter_app_itse500/core/theme/app_theme.dart';
+import 'package:flutter_app_itse500/l10n/app_localizations.dart';
 
 class MessageBubble extends StatefulWidget {
   final Message message;
@@ -72,7 +73,9 @@ class MessageBubbleState extends State<MessageBubble> {
     if (isUserBubble && (userContent.isNotEmpty || attachments.isNotEmpty)) {
       bubbles.add(
         Align(
-          alignment: Alignment.centerRight,
+          // Sent (user) bubble mirrors with locale direction: right in LTR,
+          // left in RTL, matching the natural "sent" side per writing direction.
+          alignment: AlignmentDirectional.centerEnd,
           child: ConstrainedBox(
             constraints: BoxConstraints(maxWidth: maxBubbleWidth),
             child: Container(
@@ -114,7 +117,9 @@ class MessageBubbleState extends State<MessageBubble> {
         role != 'user') {
       bubbles.add(
         Align(
-          alignment: Alignment.centerLeft,
+          // Assistant bubble mirrors with locale direction: left in LTR,
+          // right in RTL.
+          alignment: AlignmentDirectional.centerStart,
           child: ConstrainedBox(
             constraints: BoxConstraints(maxWidth: maxBubbleWidth),
             child: Container(
@@ -143,7 +148,8 @@ class MessageBubbleState extends State<MessageBubble> {
                         text: errorText),
                   if (!isStreaming && llmOutput.isNotEmpty)
                     _CopyRow(
-                        textToCopy: llmOutput, alignment: Alignment.centerLeft),
+                        textToCopy: llmOutput,
+                        alignment: AlignmentDirectional.centerStart),
                   if (!isStreaming && llmOutput.isNotEmpty)
                     const SizedBox(height: 6),
                   // Show partial text while streaming, and keep dots as a tail indicator.
@@ -166,7 +172,7 @@ class MessageBubbleState extends State<MessageBubble> {
                   if (!isStreaming && llmOutput.isNotEmpty)
                     _CopyRow(
                         textToCopy: llmOutput,
-                        alignment: Alignment.centerRight),
+                        alignment: AlignmentDirectional.centerEnd),
                 ],
               ),
             ),
@@ -178,7 +184,7 @@ class MessageBubbleState extends State<MessageBubble> {
     if (role == 'assistant' && attachments.isNotEmpty && llmOutput.isEmpty) {
       bubbles.add(
         Align(
-          alignment: Alignment.centerLeft,
+          alignment: AlignmentDirectional.centerStart,
           child: ConstrainedBox(
             constraints: BoxConstraints(maxWidth: maxBubbleWidth),
             child: Container(
@@ -299,7 +305,7 @@ class _MarkdownOrPlain extends StatelessWidget {
 
 class _CopyRow extends StatelessWidget {
   final String textToCopy;
-  final Alignment alignment;
+  final AlignmentGeometry alignment;
   const _CopyRow({required this.textToCopy, required this.alignment});
 
   @override
@@ -311,7 +317,7 @@ class _CopyRow extends StatelessWidget {
         onTap: () async {
           await Clipboard.setData(ClipboardData(text: textToCopy));
           if (context.mounted) {
-            Toaster.show(context, 'Copied to clipboard');
+            Toaster.show(context, AppLocalizations.of(context)!.copiedToClipboard);
           }
         },
         child: Row(
@@ -325,7 +331,7 @@ class _CopyRow extends StatelessWidget {
                     ?.color
                     ?.withOpacity(0.7)),
             const SizedBox(width: 4),
-            Text('Copy',
+            Text(AppLocalizations.of(context)!.copy,
                 style: TextStyle(
                     fontSize: 12,
                     color: Theme.of(context)
@@ -510,8 +516,8 @@ class _DecryptedAttachmentsState extends State<_DecryptedAttachments> {
                                     fit: BoxFit.cover)),
                       ),
                     ),
-                    Positioned(
-                      right: 4,
+                    PositionedDirectional(
+                      end: 4,
                       top: 4,
                       child: _ImageActions(
                           path: path, decrypted: data, original: a),
@@ -857,8 +863,8 @@ class _GeneratedImageTile extends StatelessWidget {
                 ),
               ),
             ),
-            const Positioned(
-              left: 6,
+            const PositionedDirectional(
+              start: 6,
               top: 6,
               child: _GenBadge(),
             ),
@@ -900,8 +906,8 @@ class _InlineB64Image extends StatelessWidget {
                 child: Image.memory(bytes, fit: BoxFit.cover),
               ),
             ),
-            const Positioned(
-              left: 6,
+            const PositionedDirectional(
+              start: 6,
               top: 6,
               child: _GenBadge(),
             ),
@@ -965,18 +971,18 @@ class _FullscreenImage extends StatelessWidget {
                   ),
                 ),
               ),
-              Positioned(
-                right: 12,
+              PositionedDirectional(
+                end: 12,
                 top: 12,
                 child: IconButton(
                   icon: const Icon(Icons.close, color: Colors.white),
                   onPressed: () => Navigator.of(context).maybePop(),
                 ),
               ),
-              Positioned(
-                left: 12,
+              PositionedDirectional(
+                start: 12,
                 bottom: 12,
-                right: 12,
+                end: 12,
                 child: _FullscreenImageActions(path: path, bytes: bytes),
               ),
             ],

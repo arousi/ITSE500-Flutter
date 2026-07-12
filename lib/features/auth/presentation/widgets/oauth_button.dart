@@ -1,35 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_app_itse500/features/auth/logic/auth_cubit.dart';
+import 'package:flutter_app_itse500/l10n/app_localizations.dart';
 
 class OAuthButton extends StatelessWidget {
   final String provider; // 'openrouter' | 'google'
   final IconData icon;
-  final String idleLabel;
-  final String busyLabel;
   const OAuthButton._({
     super.key,
     required this.provider,
     required this.icon,
-    required this.idleLabel,
-    required this.busyLabel,
   });
 
   factory OAuthButton.openRouter({Key? key}) => OAuthButton._(
         key: key,
         provider: 'openrouter',
         icon: Icons.vpn_key,
-        idleLabel: 'Continue with OpenRouter',
-        busyLabel: 'Connecting OpenRouter…',
       );
 
   factory OAuthButton.google({Key? key}) => OAuthButton._(
         key: key,
         provider: 'google',
         icon: Icons.g_mobiledata,
-        idleLabel: 'Continue with Google',
-        busyLabel: 'Connecting Google…',
       );
+
+  String _idleLabel(AppLocalizations l10n) => provider == 'google'
+      ? l10n.continueWithGoogle
+      : l10n.continueWithOpenRouter;
+
+  String _busyLabel(AppLocalizations l10n) => provider == 'google'
+      ? l10n.connectingGoogle
+      : l10n.connectingOpenRouter;
 
   @override
   Widget build(BuildContext context) {
@@ -56,11 +57,12 @@ class OAuthButton extends StatelessWidget {
         final busy = state is AuthOAuthInProgress ||
             state is AuthOAuthAwaitingRedirect ||
             state is AuthOAuthCompleting;
+        final l10n = AppLocalizations.of(context)!;
         return SizedBox(
           width: double.infinity,
           child: OutlinedButton.icon(
             icon: Icon(icon),
-            label: Text(busy ? busyLabel : idleLabel),
+            label: Text(busy ? _busyLabel(l10n) : _idleLabel(l10n)),
             style: OutlinedButton.styleFrom(
               foregroundColor: Theme.of(context).colorScheme.primary,
               side: BorderSide(color: Theme.of(context).colorScheme.primary),

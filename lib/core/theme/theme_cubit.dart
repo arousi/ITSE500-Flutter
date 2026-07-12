@@ -47,7 +47,7 @@ class ThemeCubit extends Cubit<ThemeState> {
 
   void updateTheme(bool isDarkMode) {
     emit(ThemeState(
-        themeData: isDarkMode ? ThemeData.dark() : ThemeData.light()));
+        themeData: isDarkMode ? customDarkTheme : customLightTheme));
   }
 
   Future<void> toggleTheme() async {

@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_app_itse500/features/chat/logic/chat_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_app_itse500/core/utils/design_patterns/repositories/model_repository.dart';
 import 'package:flutter_app_itse500/core/models/model_descriptor.dart';
+import 'package:flutter_app_itse500/core/models/provider_check_status.dart';
 
 // --- Extracted parts ---
 part 'provider_config_parts/connection_field.dart';
@@ -26,7 +28,12 @@ class ProviderConfigBlock extends StatefulWidget {
   final bool usesApiKey; // if false treat field as endpoint/base url
   final TextEditingController controller;
   final Future<bool> Function(String value)
-      onValidate; // key/endpoint validation
+      onValidate; // key/endpoint validation (simple valid/invalid, no network-vs-key distinction)
+  /// Optional richer validator that distinguishes an invalid credential from
+  /// a transient/network failure. When provided, this is used instead of
+  /// [onValidate] so the status UI can show "Invalid key" vs.
+  /// "Unreachable — retry" rather than one generic red state.
+  final Future<ProviderCheckStatus> Function(String value)? onValidateDetailed;
   final Future<List<String>> Function(String value)
       onFetchModels; // fetch models
   final GroupingStrategy groupingStrategy;
@@ -34,6 +41,11 @@ class ProviderConfigBlock extends StatefulWidget {
   final String fieldLabel;
   final String docsUrl;
   final bool autoValidateOnChange; // for API key providers maybe true
+  /// True for providers that only run on localhost (e.g. LM Studio). On web
+  /// these are never reachable from a hosted origin, so the check is skipped
+  /// and a clear "requires the desktop app" note is shown instead of a
+  /// generic red "Disconnected".
+  final bool requiresDesktopApp;
 
   const ProviderConfigBlock({
     super.key,
@@ -43,12 +55,14 @@ class ProviderConfigBlock extends StatefulWidget {
     required this.usesApiKey,
     required this.controller,
     required this.onValidate,
+    this.onValidateDetailed,
     required this.onFetchModels,
     required this.groupingStrategy,
     required this.metadataBuilder,
     required this.fieldLabel,
     required this.docsUrl,
     this.autoValidateOnChange = true,
+    this.requiresDesktopApp = false,
   });
 
   @override
@@ -58,6 +72,9 @@ class ProviderConfigBlock extends StatefulWidget {
 class _ProviderConfigBlockState extends State<ProviderConfigBlock> {
   bool _connected = false;
   bool _checking = false;
+  // Detailed outcome of the last validation attempt (invalid key vs.
+  // transient/unreachable). Null until a check has run.
+  ProviderCheckStatus? _status;
   bool _loadingModels = false;
   List<String> _models = [];
   final Set<String> _selectedModels = {};
@@ -345,10 +362,40 @@ class _ProviderConfigBlockState extends State<ProviderConfigBlock> {
     if (!enabled) return;
     final value = widget.controller.text.trim();
     if (value.isEmpty) return;
+
+    if (widget.requiresDesktopApp && kIsWeb) {
+      // Localhost-bound providers (e.g. LM Studio) are never reachable from
+      // a hosted web origin. Skip the network round trip entirely and show
+      // an explanatory state instead of a generic red "Disconnected".
+      setState(() {
+        _status = ProviderCheckStatus.unreachable;
+        _connected = false;
+      });
+      context
+          .read<ChatCubit>()
+          .setProviderConnected(widget.providerKey, false);
+      return;
+    }
+
     setState(() => _checking = true);
     try {
-      final ok = await widget.onValidate(value);
-      setState(() => _connected = ok);
+      bool ok;
+      if (widget.onValidateDetailed != null) {
+        final status = await widget.onValidateDetailed!(value);
+        ok = status == ProviderCheckStatus.valid;
+        setState(() {
+          _status = status;
+          _connected = ok;
+        });
+      } else {
+        ok = await widget.onValidate(value);
+        setState(() {
+          _connected = ok;
+          _status = ok
+              ? ProviderCheckStatus.valid
+              : ProviderCheckStatus.invalidKey;
+        });
+      }
       // Propagate connection status to global cubit for shared UI (e.g., configure dialog)
       context.read<ChatCubit>().setProviderConnected(widget.providerKey, ok);
     } finally {
@@ -395,6 +442,7 @@ class _ProviderConfigBlockState extends State<ProviderConfigBlock> {
     widget.controller.clear();
     setState(() {
       _connected = false;
+      _status = null;
       _models = [];
       _selectedModels.clear();
     });
@@ -418,20 +466,36 @@ class _ProviderConfigBlockState extends State<ProviderConfigBlock> {
     final effectiveConnected =
         chatCubit.providerConnected[widget.providerKey] ?? _connected;
 
+    final isLocalOnlyOnWeb = widget.requiresDesktopApp && kIsWeb;
+
     Color statusColor;
     String statusText;
+    bool showRetry = false;
     if (!enabled) {
       statusColor = Colors.grey;
       statusText = 'Disabled';
     } else if (_checking) {
       statusColor = Colors.orange;
       statusText = 'Checking...';
-    } else if (effectiveConnected) {
+    } else if (isLocalOnlyOnWeb && widget.controller.text.isNotEmpty) {
+      // Never even attempted on web (see _validateAndMaybeFetch); explain
+      // why instead of showing a generic red "Disconnected".
+      statusColor = Colors.blueGrey;
+      statusText = 'Requires the desktop app (localhost)';
+    } else if (effectiveConnected &&
+        (_status == null || _status == ProviderCheckStatus.valid)) {
       statusColor = Colors.green;
       statusText = 'Connected';
     } else if (widget.controller.text.isEmpty) {
       statusColor = Colors.grey;
       statusText = 'Not set';
+    } else if (_status == ProviderCheckStatus.unreachable) {
+      statusColor = Colors.amber[800]!;
+      statusText = 'Unreachable — retry';
+      showRetry = true;
+    } else if (_status == ProviderCheckStatus.invalidKey) {
+      statusColor = Colors.red;
+      statusText = 'Invalid key';
     } else {
       statusColor = Colors.red;
       statusText = 'Disconnected';
@@ -446,6 +510,8 @@ class _ProviderConfigBlockState extends State<ProviderConfigBlock> {
           enabled: enabled,
           statusColor: statusColor,
           statusText: statusText,
+          showRetry: showRetry,
+          onRetry: _validateAndMaybeFetch,
           controller: widget.controller,
           usesApiKey: widget.usesApiKey,
           isEditable: widget.isEditable,

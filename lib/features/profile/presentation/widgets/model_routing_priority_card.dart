@@ -3,6 +3,7 @@ import '../../../chat/logic/chat_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../screens/widgets/priority_multi_select.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_app_itse500/l10n/app_localizations.dart';
 
 class ModelRoutingPriorityCard extends StatelessWidget {
   const ModelRoutingPriorityCard({super.key});
@@ -11,6 +12,7 @@ class ModelRoutingPriorityCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final chatCubit = context.watch<ChatCubit>();
     final providers = chatCubit.supportedProviders;
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12.0),
@@ -21,7 +23,7 @@ class ModelRoutingPriorityCard extends StatelessWidget {
               children: [
                 const Icon(Icons.route, size: 16),
                 const SizedBox(width: 6),
-                Text('Model Routing Priority',
+                Text(l10n.modelRoutingPriority,
                     style: Theme.of(context)
                         .textTheme
                         .titleSmall
@@ -29,7 +31,7 @@ class ModelRoutingPriorityCard extends StatelessWidget {
                 const Spacer(),
                 TextButton(
                   onPressed: () => context.push('/models'),
-                  child: const Text('Catalog'),
+                  child: Text(l10n.catalog),
                 ),
               ],
             ),
@@ -45,7 +47,7 @@ class ModelRoutingPriorityCard extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 4.0),
                   child: Opacity(
                       opacity: 0.6,
-                      child: Text('$p disabled',
+                      child: Text(l10n.providerDisabledLabel(p),
                           style: Theme.of(context).textTheme.bodySmall)),
                 );
               }
@@ -57,7 +59,9 @@ class ModelRoutingPriorityCard extends StatelessWidget {
                   Row(children: [
                     Text(
                         p.toUpperCase() +
-                            (p == 'huggingface' ? ' (Alpha Feature)' : ''),
+                            (p == 'huggingface'
+                                ? ' ${l10n.alphaFeature}'
+                                : ''),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             fontSize: 12, fontWeight: FontWeight.w600)),
                     const SizedBox(width: 6),
@@ -68,14 +72,13 @@ class ModelRoutingPriorityCard extends StatelessWidget {
                       const Icon(Icons.cloud_off, size: 14, color: Colors.red),
                     if (p == 'huggingface') const SizedBox(width: 6),
                     if (p == 'huggingface')
-                      const Tooltip(
-                          message:
-                              'Chat & embeddings disabled for now; image generation only',
-                          child: Icon(Icons.science,
+                      Tooltip(
+                          message: l10n.chatEmbeddingsDisabledTooltip,
+                          child: const Icon(Icons.science,
                               size: 14, color: Colors.orange)),
                   ]),
                   if (models.isEmpty)
-                    Text('Fetch models first to configure routing',
+                    Text(l10n.fetchModelsFirst,
                         style: TextStyle(
                             fontSize: 11,
                             color: Theme.of(context)
@@ -95,7 +98,7 @@ class ModelRoutingPriorityCard extends StatelessWidget {
               );
             }),
             Text(
-              'If Priority 1 model fails, the next one is attempted automatically.',
+              l10n.priorityFailoverExplanation,
               style: TextStyle(
                   fontSize: 11,
                   color: Theme.of(context)
@@ -106,7 +109,7 @@ class ModelRoutingPriorityCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Invalid or removed models are automatically cleared and logged.',
+              l10n.invalidModelsClearedExplanation,
               style: TextStyle(
                   fontSize: 10,
                   color: Theme.of(context)

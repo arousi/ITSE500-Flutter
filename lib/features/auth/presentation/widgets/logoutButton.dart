@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_app_itse500/core/theme/app_theme.dart';
+import 'package:flutter_app_itse500/l10n/app_localizations.dart';
 import '../../logic/auth_cubit.dart';
 
 /// A reusable Material-styled logout button that triggers the AuthCubit logout method.
@@ -14,10 +15,11 @@ class LogoutButton extends StatelessWidget {
       builder: (context, state) {
         final isGuest = state is AuthGuest;
         final palette = Theme.of(context).extension<AppPalette>();
+        final l10n = AppLocalizations.of(context)!;
         return ElevatedButton.icon(
           icon: const Icon(Icons.logout, color: Colors.white),
           label: Text(
-            isGuest ? 'Exit Guest' : 'Logout',
+            isGuest ? l10n.exitGuest : l10n.logout,
             style: const TextStyle(
                 color: Colors.white, fontWeight: FontWeight.bold),
           ),
@@ -34,16 +36,15 @@ class LogoutButton extends StatelessWidget {
               final confirmed = await showDialog<bool>(
                 context: context,
                 builder: (ctx) => AlertDialog(
-                  title: const Text('Exit Guest Mode?'),
-                  content: const Text(
-                      'This will delete all local conversations and data on this device.'),
+                  title: Text(l10n.exitGuestModeTitle),
+                  content: Text(l10n.exitGuestModeBody),
                   actions: [
                     TextButton(
                         onPressed: () => Navigator.pop(ctx, false),
-                        child: const Text('Cancel')),
+                        child: Text(l10n.cancel)),
                     FilledButton.tonal(
                         onPressed: () => Navigator.pop(ctx, true),
-                        child: const Text('Delete & Exit')),
+                        child: Text(l10n.deleteAndExit)),
                   ],
                 ),
               );

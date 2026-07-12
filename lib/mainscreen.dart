@@ -16,6 +16,9 @@ import 'features/profile/logic/profile_cubit.dart';
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:desktop_drop/desktop_drop.dart';
+import 'core/utils/responsive.dart';
+import 'l10n/app_localizations.dart';
+import 'core/models/conversation.dart';
 
 class MainScreen extends StatefulWidget {
   final Widget child;
@@ -51,8 +54,8 @@ class _MainScreenState extends State<MainScreen> {
     final isUp = await DataRepository().healthCheck();
     if (!isUp && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Server is down. Some features may not work.')),
+        SnackBar(
+            content: Text(AppLocalizations.of(context)!.serverDownWarning)),
       );
     }
   }
@@ -64,20 +67,26 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     final logger = UnifiedLogger.instance;
+    final onConversationTap = (Conversation conversation) {
+      logger.i('Conversation tapped: ${conversation.title}');
+      context
+          .read<ChatCubit>()
+          .setActiveConversationId(conversation.conversationId);
+      context.go('/chat');
+    };
+    final bool useRail = context.isTablet || context.isDesktop;
     return Scaffold(
       key: _scaffoldKey,
-      drawer: CustomDrawer(
-        onConversationTap: (conversation) {
-          logger.i('Conversation tapped: ${conversation.title}');
-          context.read<ChatCubit>().setActiveConversationId(conversation.conversationId);
-          context.go('/chat');
-        },
-      ),
+      drawer: useRail ? null : CustomDrawer(onConversationTap: onConversationTap),
       // Removed const so CustomAppBar rebuilds and can detect current route (e.g., /profile) for back arrow logic
-      appBar: const CustomAppBar(
-        title: 'O.K Team Project',
+      appBar: CustomAppBar(
+        title: AppLocalizations.of(context)!.appTitle,
       ),
-      body: BlocListener<AuthCubit, AuthState>(
+      body: Row(
+        children: [
+          if (useRail) const _MainNavigationRail(),
+          if (useRail) const VerticalDivider(width: 1),
+          Expanded(child: BlocListener<AuthCubit, AuthState>(
         listener: (context, astate) {
           // Reload profile whenever auth becomes active again
           if (astate is AuthAuthenticated ||
@@ -128,7 +137,60 @@ class _MainScreenState extends State<MainScreen> {
             }
           },
         ),
+      )),
+        ],
       ),
+    );
+  }
+}
+
+/// Desktop/tablet-only navigation rail shown beside the body instead of a
+/// [Drawer]. Mirrors the primary destinations available from [CustomDrawer].
+class _MainNavigationRail extends StatelessWidget {
+  const _MainNavigationRail();
+
+  int _indexFor(String location) {
+    if (location.startsWith('/profile')) return 1;
+    if (location.startsWith('/models')) return 2;
+    return 0;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final location = GoRouterState.of(context).uri.toString();
+    return NavigationRail(
+      selectedIndex: _indexFor(location),
+      labelType: NavigationRailLabelType.all,
+      onDestinationSelected: (index) {
+        switch (index) {
+          case 0:
+            context.go('/chat');
+            break;
+          case 1:
+            context.push('/profile');
+            break;
+          case 2:
+            context.push('/models');
+            break;
+        }
+      },
+      destinations: [
+        NavigationRailDestination(
+          icon: const Icon(Icons.chat_bubble_outline),
+          selectedIcon: const Icon(Icons.chat_bubble),
+          label: Text(AppLocalizations.of(context)!.chat),
+        ),
+        NavigationRailDestination(
+          icon: const Icon(Icons.person_outline),
+          selectedIcon: const Icon(Icons.person),
+          label: Text(AppLocalizations.of(context)!.profile),
+        ),
+        NavigationRailDestination(
+          icon: const Icon(Icons.auto_awesome_motion_outlined),
+          selectedIcon: const Icon(Icons.auto_awesome_motion),
+          label: Text(AppLocalizations.of(context)!.models),
+        ),
+      ],
     );
   }
 }
@@ -150,14 +212,14 @@ class _LockedOverlay extends StatelessWidget {
               const Icon(Icons.lock, size: 64, color: Colors.white70),
               const SizedBox(height: 16),
               Text(
-                'Locked ($reason)',
+                AppLocalizations.of(context)!.locked(reason),
                 style: const TextStyle(color: Colors.white70, fontSize: 18),
               ),
               const SizedBox(height: 24),
               ElevatedButton.icon(
                 onPressed: onUnlock,
                 icon: const Icon(Icons.fingerprint),
-                label: const Text('Unlock'),
+                label: Text(AppLocalizations.of(context)!.unlock),
               ),
             ],
           ),

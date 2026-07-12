@@ -6,6 +6,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_app_itse500/core/models/conversation.dart';
 import 'package:flutter_app_itse500/core/models/message.dart';
+import 'package:flutter_app_itse500/core/models/provider_check_status.dart';
 import 'package:flutter_app_itse500/core/utils/design_patterns/repositories/data_repository.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
@@ -15,6 +16,7 @@ import 'package:flutter_app_itse500/core/utils/structured_logger.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter_app_itse500/core/utils/default_api_base.dart';
 
 import '../models/custom_user.dart';
 // import '../models/visitor_user.dart'; // unused
@@ -29,9 +31,8 @@ class ApiService {
 
   // Base URLs loaded from environment (.env) with sensible fallbacks
   // Always normalized to end with /api/v1/
-  // Order intent: website (prod) first -> localhost group -> 192.x LAN
-  static String get _baseUrl => _normalizeApiBase(
-      dotenv.env['PRIMARY_API_BASE'] ?? 'https://www.itse500-ok.ly/api/v1/');
+  // Order intent: same-origin on web / website (prod) -> localhost group -> 192.x LAN
+  static String get _baseUrl => _normalizeApiBase(defaultPrimaryApiBase());
   static String get _secondaryBaseUrl => _normalizeApiBase(
       dotenv.env['SECONDARY_API_BASE'] ?? 'http://127.0.0.1:8000/api/v1/');
   static String get _tertiaryBaseUrl => _normalizeApiBase(
@@ -64,7 +65,10 @@ class ApiService {
     try {
       final u = Uri.parse(out);
       final h = u.host.toLowerCase();
-      if (h == 'www.itse500-ok.ly' || h == 'itse500-ok.ly') {
+      if (h == 'www.itse500-ok.ly' ||
+          h == 'itse500-ok.ly' ||
+          h == 'itse500.swe.com.ly' ||
+          h == 'www.itse500.swe.com.ly') {
         return 'https://${u.host}/api/v1/';
       }
     } catch (_) {}
@@ -157,9 +161,37 @@ class ApiService {
     return false;
   }
 
-  /// Checks OpenAI key using GET /models (preferred lightweight validation)
-  Future<bool> checkOpenAiKey(String apiKey) async {
-    try {
+  /// Runs [check]; if it throws or returns [ProviderCheckStatus.unreachable]
+  /// (network error, CORS failure, timeout, 429, 5xx), retries once after a
+  /// short backoff before giving up. Never retries a definitive
+  /// [ProviderCheckStatus.invalidKey] or [ProviderCheckStatus.valid] result,
+  /// so an actually-bad key never gets reported as merely "unreachable".
+  Future<ProviderCheckStatus> _checkWithRetry(
+    Future<ProviderCheckStatus> Function() check, {
+    required String label,
+    Duration backoff = const Duration(milliseconds: 600),
+  }) async {
+    for (var attempt = 0; attempt < 2; attempt++) {
+      try {
+        final status = await check();
+        if (status != ProviderCheckStatus.unreachable) return status;
+      } catch (e) {
+        _logger.e('$label key check exception', error: e);
+        await logErrorToFile('$label key check exception: $e');
+      }
+      if (attempt == 0) {
+        _logger.i('$label key check unreachable; retrying after backoff');
+        await Future.delayed(backoff);
+      }
+    }
+    return ProviderCheckStatus.unreachable;
+  }
+
+  /// Checks OpenAI key using GET /models (preferred lightweight validation).
+  /// Distinguishes an invalid key (401/403) from a transient failure
+  /// (network error/timeout/429/5xx), retrying the latter once.
+  Future<ProviderCheckStatus> checkOpenAiKeyDetailed(String apiKey) {
+    return _checkWithRetry(() async {
       final response = await tryGet(
         openAIModelsEndpoint,
         headers: {
@@ -169,20 +201,24 @@ class ApiService {
       if (debug)
         _logger.d(
             '[DEBUG] OpenAI key validation status=${response.statusCode} len=${response.body.length}');
-      if (response.statusCode == 200) return true;
+      if (response.statusCode == 200) return ProviderCheckStatus.valid;
+      if (response.statusCode == 401 || response.statusCode == 403) {
+        return ProviderCheckStatus.invalidKey;
+      }
       await logErrorToFile(
           'OpenAI key check failed: ${response.statusCode} - ${response.body}');
-      return false;
-    } catch (e) {
-      _logger.e('OpenAI key check exception', error: e);
-      await logErrorToFile('OpenAI key check exception: $e');
-      return false;
-    }
+      return ProviderCheckStatus.unreachable;
+    }, label: 'OpenAI');
   }
 
-  /// Checks OpenRouter key using GET /models
-  Future<bool> checkOpenRouterKey(String apiKey) async {
-    try {
+  /// Checks OpenAI key. Prefer [checkOpenAiKeyDetailed] for UI that needs to
+  /// distinguish an invalid key from a transient/network failure.
+  Future<bool> checkOpenAiKey(String apiKey) async =>
+      (await checkOpenAiKeyDetailed(apiKey)) == ProviderCheckStatus.valid;
+
+  /// Checks OpenRouter key using GET /models. See [checkOpenAiKeyDetailed].
+  Future<ProviderCheckStatus> checkOpenRouterKeyDetailed(String apiKey) {
+    return _checkWithRetry(() async {
       final response = await tryGet(
         openRouterModelsEndpoint,
         headers: {
@@ -192,25 +228,31 @@ class ApiService {
       if (debug)
         _logger.d(
             '[DEBUG] OpenRouter key validation status=${response.statusCode}');
-      if (response.statusCode == 200) return true;
+      if (response.statusCode == 200) return ProviderCheckStatus.valid;
+      if (response.statusCode == 401 || response.statusCode == 403) {
+        return ProviderCheckStatus.invalidKey;
+      }
       await logErrorToFile(
           'OpenRouter key check failed: ${response.statusCode} - ${response.body}');
-      return false;
-    } catch (e) {
-      _logger.e('OpenRouter key check exception', error: e);
-      await logErrorToFile('OpenRouter key check exception: $e');
-      return false;
-    }
+      return ProviderCheckStatus.unreachable;
+    }, label: 'OpenRouter');
   }
 
-  /// Checks Google Gemini key using GET a single model descriptor (gemini-pro)
-  Future<bool> checkGoogleKey(String apiKey) async {
+  /// Checks OpenRouter key. Prefer [checkOpenRouterKeyDetailed] for UI that
+  /// needs to distinguish an invalid key from a transient/network failure.
+  Future<bool> checkOpenRouterKey(String apiKey) async =>
+      (await checkOpenRouterKeyDetailed(apiKey)) == ProviderCheckStatus.valid;
+
+  /// Checks Google Gemini key using GET a single model descriptor (gemini-pro).
+  /// See [checkOpenAiKeyDetailed] for the invalid-vs-unreachable contract.
+  Future<ProviderCheckStatus> checkGoogleKeyDetailed(String apiKey) {
     // Strategy:
     // 1. Try listing models with header auth (preferred modern style)
     // 2. If non-200, retry with query param (?key=) – some environments still expect this.
     // 3. Consider key valid if we get a 200 and at least one model containing 'gemini'.
-    try {
+    return _checkWithRetry(() async {
       http.Response? resp;
+      bool sawAuthFailure = false;
       try {
         resp = await tryGet(
           googleGeminiModelsEndpoint,
@@ -221,6 +263,9 @@ class ApiService {
           _logger.w(
               '[DEBUG] Primary Gemini models list attempt (header auth) threw',
               error: e);
+      }
+      if (resp != null && (resp.statusCode == 401 || resp.statusCode == 403)) {
+        sawAuthFailure = true;
       }
 
       if (resp == null || resp.statusCode != 200) {
@@ -235,6 +280,10 @@ class ApiService {
           if (debug)
             _logger.w('[DEBUG] Gemini query param attempt threw', error: e);
         }
+        if (resp != null &&
+            (resp.statusCode == 401 || resp.statusCode == 403)) {
+          sawAuthFailure = true;
+        }
       }
 
       if (resp != null && resp.statusCode == 200) {
@@ -246,23 +295,30 @@ class ApiService {
           if (debug)
             _logger.d(
                 '[DEBUG] Gemini key validation succeeded; modelsFound=${models.length} sample=${models.take(3).toList()}');
-          return models
-              .isNotEmpty; // treat as valid only if we actually saw gemini models
+          // A 200 response with no Gemini models means the key itself is
+          // working but doesn't grant access — treat as invalid, not
+          // "unreachable" (there's nothing transient to retry here).
+          return models.isNotEmpty
+              ? ProviderCheckStatus.valid
+              : ProviderCheckStatus.invalidKey;
         } catch (e) {
           await logErrorToFile('Gemini key check JSON parse error: $e');
-          return false;
+          return ProviderCheckStatus.unreachable;
         }
       }
 
       await logErrorToFile(
           'Google Gemini key check failed: status=${resp?.statusCode} body=${resp?.body.substring(0, resp.body.length.clamp(0, 500))}');
-      return false;
-    } catch (e) {
-      _logger.e('Google Gemini key check exception', error: e);
-      await logErrorToFile('Google Gemini key check exception: $e');
-      return false;
-    }
+      return sawAuthFailure
+          ? ProviderCheckStatus.invalidKey
+          : ProviderCheckStatus.unreachable;
+    }, label: 'Gemini');
   }
+
+  /// Checks Google Gemini key. Prefer [checkGoogleKeyDetailed] for UI that
+  /// needs to distinguish an invalid key from a transient/network failure.
+  Future<bool> checkGoogleKey(String apiKey) async =>
+      (await checkGoogleKeyDetailed(apiKey)) == ProviderCheckStatus.valid;
 
   /// Generic helper to extract model id list from various provider payloads
   List<String> _parseModelList(dynamic decoded) {

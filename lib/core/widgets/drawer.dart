@@ -7,6 +7,7 @@ import 'package:flutter_app_itse500/features/auth/presentation/widgets/logoutBut
 import 'package:flutter_app_itse500/features/profile/presentation/widgets/profile_button.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_app_itse500/shared_preferences.dart';
+import 'package:flutter_app_itse500/l10n/app_localizations.dart';
 
 class CustomDrawer extends StatefulWidget {
   final ValueChanged<Conversation> onConversationTap;
@@ -81,7 +82,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                     child: Row(
                       children: [
                         IconButton(
-                          tooltip: 'Select All',
+                          tooltip: AppLocalizations.of(context)!.selectAll,
                           icon: const Icon(Icons.select_all),
                           onPressed: () {
                             setState(() {
@@ -89,31 +90,34 @@ class _CustomDrawerState extends State<CustomDrawer> {
                             });
                           },
                         ),
-                        Text('${_selectedIds.length} selected'),
+                        Text(AppLocalizations.of(context)!
+                            .selectedCount(_selectedIds.length)),
                         const Spacer(),
                         IconButton(
-                          tooltip: 'Delete Selected',
+                          tooltip: AppLocalizations.of(context)!.deleteSelected,
                           icon: const Icon(Icons.delete_forever,
                               color: Colors.red),
                           onPressed: _selectedIds.isEmpty
                               ? null
                               : () async {
+                                  final l10n = AppLocalizations.of(context)!;
                                   final confirmed = await showDialog<bool>(
                                     context: context,
                                     builder: (ctx) => AlertDialog(
-                                      title: const Text(
-                                          'Delete selected conversations?'),
-                                      content: Text(
-                                          'This will permanently delete ${_selectedIds.length} conversation(s).'),
+                                      title: Text(l10n
+                                          .deleteSelectedConversationsTitle),
+                                      content: Text(l10n
+                                          .deleteSelectedConversationsBody(
+                                              _selectedIds.length)),
                                       actions: [
                                         TextButton(
                                             onPressed: () =>
                                                 Navigator.pop(ctx, false),
-                                            child: const Text('Cancel')),
+                                            child: Text(l10n.cancel)),
                                         FilledButton.tonal(
                                             onPressed: () =>
                                                 Navigator.pop(ctx, true),
-                                            child: const Text('Delete')),
+                                            child: Text(l10n.delete)),
                                       ],
                                     ),
                                   );
@@ -129,7 +133,8 @@ class _CustomDrawerState extends State<CustomDrawer> {
                                 },
                         ),
                         IconButton(
-                          tooltip: 'Cancel Selection',
+                          tooltip:
+                              AppLocalizations.of(context)!.cancelSelection,
                           icon: const Icon(Icons.close),
                           onPressed: () => setState(() {
                             _selectionMode = false;
@@ -154,8 +159,9 @@ class _CustomDrawerState extends State<CustomDrawer> {
                               child: CircularProgressIndicator());
                         }
                         if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                          return const Center(
-                              child: Text('No conversations found'));
+                          return Center(
+                              child: Text(AppLocalizations.of(context)!
+                                  .noConversationsFound));
                         }
                         final conversations = snapshot.data!;
                         return ListView.builder(
@@ -271,7 +277,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                 ),
                 const Divider(height: 1),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+                  padding: const EdgeInsetsDirectional.fromSTEB(16, 10, 16, 12),
                   child: Column(
                     children: [
                       SizedBox(
@@ -283,7 +289,8 @@ class _CustomDrawerState extends State<CustomDrawer> {
                             Future.microtask(
                                 () => GoRouter.of(context).push('/models'));
                           },
-                          label: const Text('Model Catalog'),
+                          label:
+                              Text(AppLocalizations.of(context)!.modelCatalog),
                         ),
                       ),
                       const SizedBox(height: 12),

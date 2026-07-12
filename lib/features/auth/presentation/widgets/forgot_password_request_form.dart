@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/utils/form_helpers.dart';
+import 'package:flutter_app_itse500/l10n/app_localizations.dart';
 
 class ForgotPasswordRequestForm extends StatelessWidget {
   final GlobalKey<FormState> formKey;
@@ -20,6 +21,7 @@ class ForgotPasswordRequestForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -34,9 +36,9 @@ class ForgotPasswordRequestForm extends StatelessWidget {
           controller: usernameController,
           focusNode: usernameFocusNode,
           enabled: true,
-          decoration: const InputDecoration(
-            labelText: 'Username',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: l10n.username,
+            border: const OutlineInputBorder(),
           ),
         ),
         const SizedBox(height: 16),
@@ -44,9 +46,9 @@ class ForgotPasswordRequestForm extends StatelessWidget {
           controller: emailOrPhoneController,
           focusNode: emailOrPhoneFocusNode,
           enabled: true,
-          decoration: const InputDecoration(
-            labelText: 'Email',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: l10n.email,
+            border: const OutlineInputBorder(),
           ),
         ),
         const SizedBox(height: 24),
@@ -59,9 +61,9 @@ class ForgotPasswordRequestForm extends StatelessWidget {
             ),
           ),
           onPressed: onContinue,
-          child: const Text('CONTINUE',
-              style:
-                  TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          child: Text(l10n.continueLabel,
+              style: const TextStyle(
+                  color: Colors.white, fontWeight: FontWeight.bold)),
         ),
         const SizedBox(height: 24),
         const PrivacyPolicyText(),

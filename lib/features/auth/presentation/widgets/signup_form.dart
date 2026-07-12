@@ -3,6 +3,7 @@ import 'package:flutter_app_itse500/features/auth/presentation/widgets/policy_te
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_app_itse500/core/utils/unified_logger.dart';
+import 'package:flutter_app_itse500/l10n/app_localizations.dart';
 
 import '../../../../core/utils/form_helpers.dart';
 import '../../logic/auth_cubit.dart';
@@ -35,8 +36,9 @@ class _SignUpFormState extends State<SignUpForm> {
       final email = emailController.text;
       final pw = passwordController.text;
       if (pw.isEmpty || pw.length < 6) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Password must be at least 6 characters')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content:
+                Text(AppLocalizations.of(context)!.passwordMinLength)));
         return;
       }
       context
@@ -56,7 +58,7 @@ class _SignUpFormState extends State<SignUpForm> {
             SnackBar(
                 content: Text(state.message.isNotEmpty
                     ? state.message
-                    : 'Registration failed')),
+                    : AppLocalizations.of(context)!.registrationFailed)),
           );
         }
       },
@@ -64,7 +66,9 @@ class _SignUpFormState extends State<SignUpForm> {
         onTap: () => FocusScope.of(context).unfocus(),
         child: Center(
           child: SingleChildScrollView(
-            child: Form(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 440),
+              child: Form(
               key: _formKey,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -91,23 +95,25 @@ class _SignUpFormState extends State<SignUpForm> {
                   TextFormField(
                     controller: passwordController,
                     obscureText: true,
-                    decoration: const InputDecoration(labelText: 'Password'),
-                    validator: (v) =>
-                        (v == null || v.isEmpty) ? 'Enter password' : null,
+                    decoration: InputDecoration(
+                        labelText: AppLocalizations.of(context)!.password),
+                    validator: (v) => (v == null || v.isEmpty)
+                        ? AppLocalizations.of(context)!.enterPassword
+                        : null,
                   ),
                   const SizedBox(height: 24),
                   SignUpButton(
                     onPressed: _handleSignUp,
                   ),
                   const SizedBox(height: 12),
-                  const Row(
+                  Row(
                     children: [
-                      Expanded(child: Divider()),
+                      const Expanded(child: Divider()),
                       Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 8.0),
-                        child: Text('or continue with'),
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: Text(AppLocalizations.of(context)!.orContinueWith),
                       ),
-                      Expanded(child: Divider()),
+                      const Expanded(child: Divider()),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -126,12 +132,12 @@ class _SignUpFormState extends State<SignUpForm> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text('Already have an account? ',
+                      Text(AppLocalizations.of(context)!.alreadyHaveAccountQuestion,
                           style: Theme.of(context).textTheme.bodyLarge),
                       GestureDetector(
                         onTap: () => GoRouter.of(context).pushNamed('login'),
-                        child: const Text('Sign In',
-                            style: TextStyle(
+                        child: Text(AppLocalizations.of(context)!.signIn,
+                            style: const TextStyle(
                                 color: Colors.blue,
                                 fontWeight: FontWeight.bold)),
                       ),
@@ -144,6 +150,7 @@ class _SignUpFormState extends State<SignUpForm> {
                   const SizedBox(height: 24),
                 ],
               ),
+            ),
             ),
           ),
         ),

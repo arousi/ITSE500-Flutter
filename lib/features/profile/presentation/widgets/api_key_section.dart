@@ -4,6 +4,7 @@ import 'package:flutter_app_itse500/core/utils/design_patterns/repositories/mode
 import 'package:flutter_app_itse500/core/models/model_descriptor.dart';
 import 'package:flutter_app_itse500/features/profile/presentation/widgets/provider_config_block.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_app_itse500/l10n/app_localizations.dart';
 
 class ApiKeySection extends StatefulWidget {
   final bool isEditable;
@@ -175,11 +176,12 @@ class _ApiKeySectionState extends State<ApiKeySection> {
   @override
   Widget build(BuildContext context) {
     final dataRepo = DataRepository();
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Providers header
-        Text('Providers', style: Theme.of(context).textTheme.titleLarge),
+        Text(l10n.providersLabel, style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 12),
         // Order: 1 Gemini 2 LM Studio 3 OpenAI 4 OpenRouter
         ProviderConfigBlock(
@@ -201,7 +203,7 @@ class _ApiKeySectionState extends State<ApiKeySection> {
           },
           groupingStrategy: _groupHuggingFace,
           metadataBuilder: _metaDefault,
-          fieldLabel: 'HuggingFace API Token',
+          fieldLabel: l10n.providerApiTokenLabel('HuggingFace'),
           docsUrl: 'https://huggingface.co/settings/tokens',
         ),
         const Divider(height: 32),
@@ -212,10 +214,11 @@ class _ApiKeySectionState extends State<ApiKeySection> {
           usesApiKey: true,
           controller: _geminiController,
           onValidate: (k) => dataRepo.checkGoogleKey(k),
+          onValidateDetailed: (k) => dataRepo.checkGoogleKeyDetailed(k),
           onFetchModels: (k) => dataRepo.fetchGoogleGeminiModels(k),
           groupingStrategy: _groupGemini,
           metadataBuilder: _metaDefault,
-          fieldLabel: 'Gemini API Key',
+          fieldLabel: l10n.providerApiKeyLabel('Gemini'),
           docsUrl: 'https://aistudio.google.com/apikey',
         ),
         const Divider(height: 32),
@@ -226,6 +229,10 @@ class _ApiKeySectionState extends State<ApiKeySection> {
           usesApiKey: false,
           controller: _lmStudioEndpointController,
           autoValidateOnChange: false,
+          // Localhost-bound: never reachable from a hosted web origin. The
+          // widget skips this call entirely on web (requiresDesktopApp) and
+          // shows an explanatory status instead.
+          requiresDesktopApp: true,
           onValidate: (endpoint) async {
             final status = await dataRepo.checkLmStudioStatus(endpoint);
             return status == 'up';
@@ -234,7 +241,7 @@ class _ApiKeySectionState extends State<ApiKeySection> {
               dataRepo.fetchLmStudioModels(baseUrl: endpoint),
           groupingStrategy: _groupLmStudio,
           metadataBuilder: _metaDefault,
-          fieldLabel: 'LM Studio Base URL',
+          fieldLabel: l10n.providerBaseUrlLabel('LM Studio'),
           docsUrl: 'https://lmstudio.ai',
         ),
         const Divider(height: 32),
@@ -245,10 +252,11 @@ class _ApiKeySectionState extends State<ApiKeySection> {
           usesApiKey: true,
           controller: _openAiController,
           onValidate: (k) => dataRepo.checkOpenAiKey(k),
+          onValidateDetailed: (k) => dataRepo.checkOpenAiKeyDetailed(k),
           onFetchModels: (k) => dataRepo.fetchOpenAIModels(k),
           groupingStrategy: _groupOpenAI,
           metadataBuilder: _metaDefault,
-          fieldLabel: 'OpenAI API Key',
+          fieldLabel: l10n.providerApiKeyLabel('OpenAI'),
           docsUrl: 'https://platform.openai.com/api-keys',
         ),
         const Divider(height: 32),
@@ -259,6 +267,7 @@ class _ApiKeySectionState extends State<ApiKeySection> {
           usesApiKey: true,
           controller: _openRouterController,
           onValidate: (k) => dataRepo.checkOpenRouterKey(k),
+          onValidateDetailed: (k) => dataRepo.checkOpenRouterKeyDetailed(k),
           onFetchModels: (k) async {
             final ids =
                 await dataRepo.fetchOpenRouterModels(k, forceRefresh: true);
@@ -276,7 +285,7 @@ class _ApiKeySectionState extends State<ApiKeySection> {
           },
           groupingStrategy: _groupOpenRouter,
           metadataBuilder: _metaOpenRouter,
-          fieldLabel: 'OpenRouter API Key',
+          fieldLabel: l10n.providerApiKeyLabel('OpenRouter'),
           docsUrl: 'https://openrouter.ai/settings/keys',
         ),
       ],

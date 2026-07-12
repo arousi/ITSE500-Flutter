@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/widgets/privacy_toggle.dart';
+import 'package:flutter_app_itse500/l10n/app_localizations.dart';
 
 class StorageOptionsCard extends StatelessWidget {
   final String initialMode; // 'local' | 'mixed'
@@ -14,8 +15,8 @@ class StorageOptionsCard extends StatelessWidget {
         padding: const EdgeInsets.all(12.0),
         child: Row(
           children: [
-            const Text('Storage Options:',
-                style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context)!.storageOptions,
+                style: const TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(width: 12),
             const Spacer(),
             PrivacyToggle(showLabel: true, onChanged: onChanged),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/utils/form_helpers.dart';
 import '../../../../core/widgets/otp_pinput.dart';
+import 'package:flutter_app_itse500/l10n/app_localizations.dart';
 
 class ForgotPasswordEnterCodeForm extends StatelessWidget {
   final GlobalKey<FormState> formKey;
@@ -23,6 +24,7 @@ class ForgotPasswordEnterCodeForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -33,8 +35,8 @@ class ForgotPasswordEnterCodeForm extends StatelessWidget {
           child: Icon(Icons.person, size: 48, color: Colors.white70),
         ),
         const SizedBox(height: 32),
-        const Text('Confirmation Code',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        Text(l10n.confirmationCode,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 16),
         OtpPinput(
           controller: codeController,
@@ -62,9 +64,9 @@ class ForgotPasswordEnterCodeForm extends StatelessWidget {
             ),
           ),
           onPressed: onResetPassword,
-          child: const Text('RESET PASSWORD',
-              style:
-                  TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          child: Text(l10n.resetPasswordButton,
+              style: const TextStyle(
+                  color: Colors.white, fontWeight: FontWeight.bold)),
         ),
         const SizedBox(height: 24),
         const PrivacyPolicyText(),

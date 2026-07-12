@@ -6,6 +6,7 @@ import 'package:flutter_app_itse500/core/utils/design_patterns/repositories/data
 import 'package:go_router/go_router.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_app_itse500/core/utils/unified_logger.dart';
+import 'package:flutter_app_itse500/core/utils/default_api_base.dart';
 import 'package:local_auth/local_auth.dart';
 
 // removed duplicate import
@@ -460,7 +461,7 @@ class AuthCubit extends Cubit<AuthState> {
 
   String _primaryApiBase() {
     // Prefer production website; DataRepository/ApiService will fallback to localhost and 192.x
-    return 'https://www.itse500-ok.ly/api/v1/';
+    return defaultPrimaryApiBase();
   }
 
   /// Checks if JWT access token exists in secure storage

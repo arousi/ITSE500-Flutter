@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_app_itse500/l10n/app_localizations.dart';
+import 'package:flutter_app_itse500/core/locale/locale_cubit.dart';
 import 'package:flutter_app_itse500/core/utils/design_patterns/repositories/data_repository.dart';
 import 'package:flutter_app_itse500/features/profile/logic/profile_cubit.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -19,19 +22,19 @@ import 'core/utils/unified_logger.dart';
 import 'core/di/locator.dart';
 import 'core/desktop/desktop_init.dart';
 import 'core/desktop/desktop_protocol.dart';
-import 'package:dynamic_path_url_strategy/dynamic_path_url_strategy.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Use path-based URLs on web (no # hash in the URL).
-  // Extra safety: only attempt on web; swallow any unexpected errors.
-  try {
-    if (kIsWeb) {
-      setPathUrlStrategy();
-    }
-  } catch (e) {
-    debugPrint('Path URL strategy setup skipped: $e');
-  }
+  // Web uses Flutter's default HASH url strategy (e.g. /app/#/chat/5).
+  // The app is served by Django under /app/ with <base href> rewritten to
+  // /static/flutter-web/ (see ITSE500-Django/core/views.py). A path-based
+  // strategy round-trips those two prefixes incorrectly: in-app navigation
+  // rewrites the visible URL to /static/flutter-web/<route>, which 404s on
+  // refresh because Django's static route only serves literal files there.
+  // Hash URLs are immune to this — only the fragment changes, so the
+  // browser never sends the internal route to the server. Do not switch
+  // back to a path strategy without first reconciling base href with the
+  // actual /app/ mount path on the Django side.
   // Initialize sqflite: web uses FFI Web implementation; desktop uses FFI
   try {
     if (kIsWeb) {
@@ -58,7 +61,16 @@ Future<void> main() async {
     // Non-fatal; continue startup if desktop init fails (e.g., tests)
   }
   try {
-    await dotenv.load(fileName: '.env');
+    if (kIsWeb) {
+      // On web the .env asset is publicly fetchable AND Django's collectstatic
+      // drops dot-files (so it 404s anyway). Initialize dotenv with an empty map
+      // — no network fetch, no console 404 — and rely on the in-code default
+      // base URLs. Provider keys on web come from OAuth / secure storage, never
+      // from a bundled .env.
+      dotenv.testLoad(fileInput: '');
+    } else {
+      await dotenv.load(fileName: '.env');
+    }
   } catch (e) {
     // Fallback silently if .env not packaged; defaults in code will be used.
     debugPrint('dotenv load failed (continuing with defaults): $e');
@@ -96,6 +108,9 @@ class _MyAppState extends State<MyApp> {
         BlocProvider<ThemeCubit>(
           create: (context) => ThemeCubit(),
         ),
+        BlocProvider<LocaleCubit>(
+          create: (context) => LocaleCubit(),
+        ),
         BlocProvider<ChatCubit>(
           create: (context) => ChatCubit(),
         ),
@@ -124,12 +139,24 @@ class _MyAppState extends State<MyApp> {
                   (state as dynamic).themeData as ThemeData? ??
                       customLightTheme;
               final isDark = current.brightness == Brightness.dark;
-              return MaterialApp.router(
-                routerConfig: _router!,
-                title: 'ITSE500',
-                theme: customLightTheme,
-                darkTheme: customDarkTheme,
-                themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
+              return BlocBuilder<LocaleCubit, Locale>(
+                builder: (context, locale) {
+                  return MaterialApp.router(
+                    routerConfig: _router!,
+                    title: 'ITSE500',
+                    theme: customLightTheme,
+                    darkTheme: customDarkTheme,
+                    themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
+                    locale: locale,
+                    supportedLocales: AppLocalizations.supportedLocales,
+                    localizationsDelegates: const [
+                      AppLocalizations.delegate,
+                      GlobalMaterialLocalizations.delegate,
+                      GlobalWidgetsLocalizations.delegate,
+                      GlobalCupertinoLocalizations.delegate,
+                    ],
+                  );
+                },
               );
             },
           );

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'logic/model_catalog_cubit.dart';
 import 'package:flutter_app_itse500/core/models/model_descriptor.dart';
+import 'package:flutter_app_itse500/l10n/app_localizations.dart';
 
 class ModelCatalogScreen extends StatelessWidget {
   const ModelCatalogScreen({super.key});
@@ -32,21 +33,22 @@ class ModelCatalogScreen extends StatelessWidget {
       create: (_) => ModelCatalogCubit(),
       child: BlocBuilder<ModelCatalogCubit, ModelCatalogState>(
         builder: (context, state) {
+          final l10n = AppLocalizations.of(context)!;
           return Scaffold(
             // MainScreen supplies the top AppBar. Provide inline header + actions.
             body: Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 8, 4),
+                  padding: const EdgeInsetsDirectional.fromSTEB(16, 12, 8, 4),
                   child: Row(
                     children: [
-                      const Expanded(
-                        child: Text('Model Catalog',
-                            style: TextStyle(
+                      Expanded(
+                        child: Text(l10n.modelCatalog,
+                            style: const TextStyle(
                                 fontSize: 18, fontWeight: FontWeight.w600)),
                       ),
                       IconButton(
-                        tooltip: 'Refresh all',
+                        tooltip: l10n.refreshAll,
                         onPressed: () async {
                           final cubit = context.read<ModelCatalogCubit>();
                           for (final (p, _, __) in providers) {
@@ -91,10 +93,10 @@ class ModelCatalogScreen extends StatelessWidget {
                                   Text(
                                       models == null
                                           ? '—'
-                                          : '${models.length} models',
+                                          : l10n.modelsCount(models.length),
                                       style: const TextStyle(fontSize: 11)),
                                   if (last != null)
-                                    Text(_ago(last),
+                                    Text(_ago(last, l10n),
                                         style: const TextStyle(
                                             fontSize: 10, color: Colors.grey)),
                                 ],
@@ -118,10 +120,10 @@ class ModelCatalogScreen extends StatelessWidget {
   }
 }
 
-String _ago(DateTime dt) {
+String _ago(DateTime dt, AppLocalizations l10n) {
   final d = DateTime.now().difference(dt);
-  if (d.inMinutes < 1) return 'just now';
-  if (d.inMinutes < 60) return '${d.inMinutes}m ago';
-  if (d.inHours < 24) return '${d.inHours}h ago';
-  return '${d.inDays}d ago';
+  if (d.inMinutes < 1) return l10n.justNow;
+  if (d.inMinutes < 60) return l10n.minutesAgo(d.inMinutes);
+  if (d.inHours < 24) return l10n.hoursAgo(d.inHours);
+  return l10n.daysAgo(d.inDays);
 }

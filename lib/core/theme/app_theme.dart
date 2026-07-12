@@ -62,7 +62,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
 
 // Hex helpers
 const _kPrimary = Color(0xFF1976D2); // buttons & toggles
-const _kAppBar = Color(0xFF393939);
+const _kAppBar = Color(0xFF1C1B1F);
 const _kLogoutBtn = Color(0xFFC22527);
 const _kLogoutBg = Color(0xFF1C1B1F);
 const _kAssistantBubble = Color(0xFF717171);
@@ -91,6 +91,10 @@ ThemeData _buildTheme({required bool dark}) {
   );
   return base.copyWith(
     colorScheme: cs,
+    scaffoldBackgroundColor:
+        dark ? const Color(0xFF1C1B1F) : const Color(0xFFFFFAFA),
+    textTheme: base.textTheme.apply(fontFamily: 'Alexandria'),
+    primaryTextTheme: base.primaryTextTheme.apply(fontFamily: 'Alexandria'),
     appBarTheme: AppBarTheme(
       backgroundColor: palette.appBar,
       foregroundColor: Colors.white,

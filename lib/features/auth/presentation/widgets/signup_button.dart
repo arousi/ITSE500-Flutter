@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app_itse500/l10n/app_localizations.dart';
 
 class SignUpButton extends StatelessWidget {
   final VoidCallback? onPressed;
@@ -15,8 +16,9 @@ class SignUpButton extends StatelessWidget {
         ),
       ),
       onPressed: onPressed,
-      child: const Text('SIGN UP',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+      child: Text(AppLocalizations.of(context)!.signUp.toUpperCase(),
+          style: const TextStyle(
+              color: Colors.white, fontWeight: FontWeight.bold)),
     );
   }
 }

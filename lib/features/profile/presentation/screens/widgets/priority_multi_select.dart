@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app_itse500/l10n/app_localizations.dart';
 
 class PriorityMultiSelect extends StatefulWidget {
   final String provider;
@@ -45,6 +46,7 @@ class _PriorityMultiSelectState extends State<PriorityMultiSelect> {
                           style: const TextStyle(fontWeight: FontWeight.w600)),
                       const Spacer(),
                       IconButton(
+                          tooltip: AppLocalizations.of(ctx)!.doneAction,
                           onPressed: () => Navigator.pop(ctx, sel),
                           icon: const Icon(Icons.check))
                     ]),
@@ -82,7 +84,7 @@ class _PriorityMultiSelectState extends State<PriorityMultiSelect> {
                     )),
                     const SizedBox(height: 8),
                     Align(
-                        alignment: Alignment.centerLeft,
+                        alignment: AlignmentDirectional.centerStart,
                         child: Text('Tap to add/remove models',
                             style: TextStyle(
                                 color: Colors.grey.shade600, fontSize: 11))),
@@ -146,7 +148,7 @@ class _PriorityMultiSelectState extends State<PriorityMultiSelect> {
         onPressed: _openPicker,
         icon: const Icon(Icons.list_alt),
         label: Align(
-            alignment: Alignment.centerLeft,
+            alignment: AlignmentDirectional.centerStart,
             child: Text(label,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(

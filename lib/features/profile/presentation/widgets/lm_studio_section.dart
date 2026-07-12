@@ -156,7 +156,8 @@ class _LMStudioSectionState extends State<LMStudioSection> {
               ),
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(left: 8, right: 8, bottom: 8),
+                  padding: const EdgeInsetsDirectional.only(
+                      start: 8, end: 8, bottom: 8),
                   child: Wrap(
                     spacing: 6,
                     runSpacing: -4,

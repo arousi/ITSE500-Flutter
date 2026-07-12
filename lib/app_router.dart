@@ -11,6 +11,7 @@ import 'mainscreen.dart';
 import 'features/chat/presentation/screens/chat_screen.dart';
 import 'features/model_catalog/model_catalog_screen.dart';
 import 'features/model_catalog/provider_models_screen.dart';
+import 'core/widgets/not_found_screen.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 final GlobalKey<NavigatorState> _shellNavigatorKey =
@@ -23,6 +24,7 @@ GoRouter createRouter(BuildContext context) {
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/login',
     refreshListenable: authListenable,
+    errorBuilder: (context, state) => const NotFoundScreen(),
     routes: <RouteBase>[
       ShellRoute(
         navigatorKey: _shellNavigatorKey,

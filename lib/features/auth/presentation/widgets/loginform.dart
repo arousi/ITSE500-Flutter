@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/utils/form_helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_app_itse500/core/utils/unified_logger.dart';
+import 'package:flutter_app_itse500/l10n/app_localizations.dart';
 import 'forgot_password_link.dart';
 import 'identifier_field.dart';
 import 'oauth_button.dart';
@@ -39,7 +40,9 @@ class _LoginFormState extends State<LoginForm> {
       } catch (e) {
         logger.e('Login failed', error: e);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Login failed: $e')),
+          SnackBar(
+              content:
+                  Text('${AppLocalizations.of(context)!.loginFailed}: $e')),
         );
       }
     } else {
@@ -57,8 +60,9 @@ class _LoginFormState extends State<LoginForm> {
         if (state is AuthError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text(
-                    state.message.isNotEmpty ? state.message : 'Login failed')),
+                content: Text(state.message.isNotEmpty
+                    ? state.message
+                    : AppLocalizations.of(context)!.loginFailed)),
           );
         }
       },
@@ -69,7 +73,9 @@ class _LoginFormState extends State<LoginForm> {
         },
         child: Center(
           child: SingleChildScrollView(
-            child: Form(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 440),
+              child: Form(
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -104,14 +110,14 @@ class _LoginFormState extends State<LoginForm> {
                   const PolicyText(),
                   const SizedBox(height: 12),
                   // Inline divider row formatting
-                  const Row(
+                  Row(
                     children: [
-                      Expanded(child: Divider()),
+                      const Expanded(child: Divider()),
                       Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 8.0),
-                        child: Text('or'),
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: Text(AppLocalizations.of(context)!.or),
                       ),
-                      Expanded(child: Divider()),
+                      const Expanded(child: Divider()),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -123,6 +129,7 @@ class _LoginFormState extends State<LoginForm> {
                   const SizedBox(height: 24),
                 ],
               ),
+            ),
             ),
           ),
         ),

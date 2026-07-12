@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_app_itse500/core/widgets/toaster.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_app_itse500/features/chat/logic/chat_state.dart';
+import 'package:flutter_app_itse500/l10n/app_localizations.dart';
 
 class MessageInput extends StatefulWidget {
   final TextEditingController controller;
@@ -224,7 +225,7 @@ class _MessageInputState extends State<MessageInput> {
                       value: '$provider|__favorites__',
                       child: Padding(
                         padding:
-                            const EdgeInsets.only(left: 24, top: 4, bottom: 4),
+                            const EdgeInsetsDirectional.only(start: 24, top: 4, bottom: 4),
                         child: Row(
                           children: [
                             const Icon(Icons.star,
@@ -295,7 +296,8 @@ class _MessageInputState extends State<MessageInput> {
                       value: null,
                       child: Padding(
                         padding:
-                            const EdgeInsets.only(left: 24, top: 6, bottom: 6),
+                            const EdgeInsetsDirectional.only(
+                                start: 24, top: 6, bottom: 6),
                         child: Text(
                           'No models selected — open Profile to pick',
                           style: TextStyle(
@@ -404,6 +406,7 @@ class _MessageInputState extends State<MessageInput> {
             Row(
               children: [
                 IconButton(
+                  tooltip: AppLocalizations.of(context)!.attachFile,
                   icon: Icon(Icons.add, color: iconColor),
                   onPressed: () {
                     context.read<ChatCubit>().pickAttachment();
@@ -413,7 +416,7 @@ class _MessageInputState extends State<MessageInput> {
                   child: TextField(
                     controller: widget.controller,
                     decoration: InputDecoration(
-                      hintText: 'Type a message...',
+                      hintText: AppLocalizations.of(context)!.typeAMessage,
                       border: InputBorder.none,
                       filled: true,
                       fillColor: inputFill,
@@ -427,6 +430,7 @@ class _MessageInputState extends State<MessageInput> {
                   ),
                 ),
                 IconButton(
+                  tooltip: AppLocalizations.of(context)!.send,
                   icon: Icon(Icons.send, color: iconColor),
                   onPressed: () {
                     final text = widget.controller.text.trim();

@@ -5,6 +5,7 @@ import '../../logic/profile_cubit.dart';
 import '../../logic/profile_state.dart';
 import 'package:flutter_app_itse500/features/auth/presentation/widgets/logoutButton.dart';
 import '../../../chat/logic/chat_cubit.dart';
+import 'package:flutter_app_itse500/l10n/app_localizations.dart';
 
 typedef LogoutCallback = void Function();
 
@@ -26,6 +27,7 @@ class _ProfileBottomActionsState extends State<ProfileBottomActions> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final buttonStyle = FilledButton.styleFrom(
       minimumSize: const Size.fromHeight(48),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -42,8 +44,8 @@ class _ProfileBottomActionsState extends State<ProfileBottomActions> {
             chat.purgeProviderCredentialsAndSelections().ignore();
           } catch (_) {}
           setState(() => _processing = false);
-          ScaffoldMessenger.of(context)
-              .showSnackBar(const SnackBar(content: Text('Account archived.')));
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(l10n.accountArchivedSnackbar)));
         } else if (state is ProfileDeleted) {
           try {
             final chat = context.read<ChatCubit>();
@@ -51,8 +53,8 @@ class _ProfileBottomActionsState extends State<ProfileBottomActions> {
             chat.purgeProviderCredentialsAndSelections().ignore();
           } catch (_) {}
           setState(() => _processing = false);
-          ScaffoldMessenger.of(context)
-              .showSnackBar(const SnackBar(content: Text('Account deleted.')));
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(l10n.accountDeletedSnackbar)));
         } else if (state is ProfileLoggedOut) {
           try {
             final chat = context.read<ChatCubit>();
@@ -61,12 +63,11 @@ class _ProfileBottomActionsState extends State<ProfileBottomActions> {
           } catch (_) {}
           setState(() => _processing = false);
           ScaffoldMessenger.of(context)
-              .showSnackBar(const SnackBar(content: Text('Logged out.')));
+              .showSnackBar(SnackBar(content: Text(l10n.loggedOutSnackbar)));
         } else if (state is ProfileError) {
           setState(() => _processing = false);
-          final msg = state.message.isNotEmpty
-              ? state.message
-              : 'Account action failed';
+          final msg =
+              state.message.isNotEmpty ? state.message : l10n.accountActionFailed;
           ScaffoldMessenger.of(context)
               .showSnackBar(SnackBar(content: Text(msg)));
         } else if (state is ProfileLoading) {
@@ -74,7 +75,7 @@ class _ProfileBottomActionsState extends State<ProfileBottomActions> {
         }
       },
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        padding: const EdgeInsetsDirectional.fromSTEB(16, 8, 16, 16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -87,7 +88,7 @@ class _ProfileBottomActionsState extends State<ProfileBottomActions> {
                     onPressed: _processing
                         ? null
                         : () => context.read<ProfileCubit>().sendFeedback(),
-                    label: const Text('Send Feedback'),
+                    label: Text(l10n.sendFeedback),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -98,8 +99,8 @@ class _ProfileBottomActionsState extends State<ProfileBottomActions> {
                         ? const LogoutButton()
                         : ElevatedButton.icon(
                             icon: const Icon(Icons.logout, color: Colors.white),
-                            label: const Text('Logout',
-                                style: TextStyle(
+                            label: Text(AppLocalizations.of(context)!.logout,
+                                style: const TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold)),
                             style: ElevatedButton.styleFrom(
@@ -141,7 +142,7 @@ class _ProfileBottomActionsState extends State<ProfileBottomActions> {
                         height: 16,
                         width: 16,
                         child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Text('Archive or Delete Account'),
+                    : Text(l10n.archiveOrDeleteAccount),
               ),
             ),
           ],
@@ -152,6 +153,7 @@ class _ProfileBottomActionsState extends State<ProfileBottomActions> {
 
   Future<void> _showModifyAccountDialog(BuildContext context) async {
     final cubit = context.read<ProfileCubit>();
+    final l10n = AppLocalizations.of(context)!;
     final reasonController = TextEditingController();
     bool hardDelete = false; // false => archive
     await showDialog(
@@ -160,30 +162,30 @@ class _ProfileBottomActionsState extends State<ProfileBottomActions> {
         return StatefulBuilder(
           builder: (ctx, setState) {
             return AlertDialog(
-              title: const Text('Close Your Account'),
+              title: Text(l10n.closeYourAccountTitle),
               content: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
-                      'Choose an option below. Archiving disables access and schedules deletion in ~30 days. Deleting removes your account immediately.\n There is no gurantee your account data will be removed from our past DB Backups!',
-                      style: TextStyle(fontSize: 13),
+                    Text(
+                      l10n.closeAccountExplanation,
+                      style: const TextStyle(fontSize: 13),
                     ),
                     const SizedBox(height: 12),
                     TextField(
                       controller: reasonController,
                       maxLines: 3,
-                      decoration: const InputDecoration(
-                          labelText: 'Reason / Feedback (optional)',
-                          border: OutlineInputBorder(),
-                          hintText: 'Tell us why you are leaving...'),
+                      decoration: InputDecoration(
+                          labelText: l10n.reasonFeedbackOptional,
+                          border: const OutlineInputBorder(),
+                          hintText: l10n.tellUsWhyLeaving),
                     ),
                     const SizedBox(height: 12),
                     SwitchListTile.adaptive(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text('Permanently Delete Now'),
-                      subtitle: const Text('Turn off to archive instead'),
+                      title: Text(l10n.permanentlyDeleteNow),
+                      subtitle: Text(l10n.turnOffToArchive),
                       value: hardDelete,
                       onChanged: (v) => setState(() => hardDelete = v),
                     ),
@@ -193,7 +195,7 @@ class _ProfileBottomActionsState extends State<ProfileBottomActions> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(),
-                  child: const Text('Cancel'),
+                  child: Text(l10n.cancel),
                 ),
                 FilledButton(
                   style: FilledButton.styleFrom(
@@ -206,7 +208,7 @@ class _ProfileBottomActionsState extends State<ProfileBottomActions> {
                           await cubit.modifyAccount(
                               delete: hardDelete, reason: reason);
                         },
-                  child: Text(hardDelete ? 'Delete Now' : 'Archive'),
+                  child: Text(hardDelete ? l10n.deleteNow : l10n.archive),
                 )
               ],
             );

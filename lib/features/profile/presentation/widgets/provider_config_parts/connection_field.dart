@@ -16,6 +16,10 @@ class ConnectionField extends StatelessWidget {
   final ValueChanged<bool> onToggleEnabled;
   final ValueChanged<String> onChanged;
   final VoidCallback onFieldSubmitted;
+  /// Whether the current status is a transient/unreachable failure that's
+  /// safe to retry (vs. a definitive invalid key).
+  final bool showRetry;
+  final VoidCallback? onRetry;
 
   const ConnectionField({
     super.key,
@@ -34,6 +38,8 @@ class ConnectionField extends StatelessWidget {
     required this.onToggleEnabled,
     required this.onChanged,
     required this.onFieldSubmitted,
+    this.showRetry = false,
+    this.onRetry,
   });
 
   @override
@@ -54,6 +60,12 @@ class ConnectionField extends StatelessWidget {
             const SizedBox(width: 6),
             Text(statusText,
                 style: TextStyle(color: statusColor, fontSize: 12)),
+            if (showRetry && onRetry != null)
+              IconButton(
+                tooltip: 'Retry $displayName connection',
+                icon: const Icon(Icons.refresh, size: 18),
+                onPressed: onRetry,
+              ),
             const Spacer(),
             IconButton(
               tooltip: 'Docs',
