@@ -102,11 +102,11 @@ ThemeData _buildTheme({required bool dark}) {
       centerTitle: true,
     ),
     switchTheme: SwitchThemeData(
-      thumbColor: MaterialStateProperty.resolveWith((states) {
-        return states.contains(MaterialState.selected) ? _kPrimary : null;
+      thumbColor: WidgetStateProperty.resolveWith((states) {
+        return states.contains(WidgetState.selected) ? _kPrimary : null;
       }),
-      trackColor: MaterialStateProperty.resolveWith((states) {
-        return states.contains(MaterialState.selected)
+      trackColor: WidgetStateProperty.resolveWith((states) {
+        return states.contains(WidgetState.selected)
             ? _kPrimary.withOpacity(0.5)
             : null;
       }),

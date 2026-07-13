@@ -46,13 +46,16 @@ class _MessageInputState extends State<MessageInput> {
     if (lower.contains('image') || lower.contains('dall')) return 'Image';
     if (lower.contains('whisper') ||
         lower.contains('audio') ||
-        lower.contains('tts')) return 'Audio';
+        lower.contains('tts')) {
+      return 'Audio';
+    }
     if (lower.contains('vision')) return 'Vision';
     if (provider == 'gemini' || provider == 'google') {
       if (lower.contains('flash') || lower.contains('pro')) return 'Multimodal';
     }
-    if (lower.contains('gpt-4o') || lower.contains('gpt-5'))
+    if (lower.contains('gpt-4o') || lower.contains('gpt-5')) {
       return 'Multimodal';
+    }
     return 'Text Chat';
   }
 
@@ -325,8 +328,9 @@ class _MessageInputState extends State<MessageInput> {
                           .read<ChatCubit>()
                           .providerModelPriority[widget.selectedProvider] ??
                       const <String>[];
-                  if (favs.isNotEmpty)
+                  if (favs.isNotEmpty) {
                     selectedValue = '${widget.selectedProvider}|__favorites__';
+                  }
                 }
                 final valueExists = selectedValue == null ||
                     items.any((i) => i.value == selectedValue);

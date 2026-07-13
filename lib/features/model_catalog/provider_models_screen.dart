@@ -146,8 +146,9 @@ class _ProviderModelsScreenState extends State<ProviderModelsScreen> {
                     if (_search.isNotEmpty) {
                       final s = _search.toLowerCase();
                       if (!d.id.toLowerCase().contains(s) &&
-                          !d.displayName.toLowerCase().contains(s))
+                          !d.displayName.toLowerCase().contains(s)) {
                         return false;
+                      }
                     }
                     final isChat = d.isChat;
                     final isEmb = d.isEmbedding;
@@ -315,8 +316,9 @@ class _ProviderModelsScreenState extends State<ProviderModelsScreen> {
     final l10n = AppLocalizations.of(context)!;
     if (loading) return const Center(child: CircularProgressIndicator());
     if (error != null) return Center(child: Text(l10n.errorPrefix(error)));
-    if (empty)
+    if (empty) {
       return Center(child: Text(l10n.noModelsData));
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

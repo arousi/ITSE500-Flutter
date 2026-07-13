@@ -46,9 +46,12 @@ class Message {
     }
     // DB schema for 'messages' table doesn't include user_id/has_image/etc.
     // Be defensive and map to sensible defaults where columns are absent.
-    final dynamic voteRaw = json['vote'];
-    final bool voteBool =
-        voteRaw is int ? voteRaw != 0 : (voteRaw is bool ? voteRaw : false);
+    bool asBool(dynamic raw, {bool fallback = false}) {
+      if (raw is int) return raw != 0;
+      if (raw is bool) return raw;
+      return fallback;
+    }
+
     return Message(
       messageId: json['message_id'] as String,
       conversationId: json['conversation_id'] as String,
@@ -57,13 +60,14 @@ class Message {
       responseId: json['response_id'] as String?,
       outputId: json['output_id'] as String?,
       timestamp: DateTime.parse(json['timestamp'] as String),
-      vote: voteBool,
-      hasImage: (json['has_image'] as bool?) ?? false,
+      vote: asBool(json['vote']),
+      hasImage: asBool(json['has_image']),
       imgUrl: (json['img_Url'] as String?) ?? (json['img'] as String?),
       metadata: meta is Map<String, dynamic> ? meta : null,
-      hasEmbedding:
-          (json['has_embedding'] as bool?) ?? (json['embedding'] != null),
-      hasDocument: (json['has_document'] as bool?) ?? (json['doc'] != null),
+      hasEmbedding: asBool(json['has_embedding'],
+          fallback: json['embedding'] != null),
+      hasDocument:
+          asBool(json['has_document'], fallback: json['doc'] != null),
       docUrl: (json['doc_url'] as String?) ?? (json['doc'] as String?),
     );
   }
@@ -85,12 +89,14 @@ class Message {
       'response_id': responseId,
       'output_id': outputId,
       'timestamp': timestamp.toIso8601String(),
-      'vote': vote,
-      'has_image': hasImage,
+      // Stored as INTEGER (0/1) in sqlite; strict drivers (e.g. sqflite_common_ffi
+      // used in tests) reject native Dart bool values.
+      'vote': vote ? 1 : 0,
+      'has_image': hasImage ? 1 : 0,
       'img_Url': imgUrl,
       'metadata': metaString,
-      'has_embedding': hasEmbedding,
-      'has_document': hasDocument,
+      'has_embedding': hasEmbedding ? 1 : 0,
+      'has_document': hasDocument ? 1 : 0,
       'doc_url': docUrl,
     };
   }

@@ -61,8 +61,8 @@ class ArtifactEncryptor {
     final bytes = await File(path).readAsBytes();
     final enc = await encryptBytes(Uint8List.fromList(bytes));
     final outPath = '$path.enc';
-    final combined = <int>[...enc['ciphertext'] as List<int>]
-      ..addAll(enc['mac'] as List<int>);
+    final combined = <int>[...enc['ciphertext'] as List<int>, ...enc['mac'] as List<int>]
+      ;
     await File(outPath).writeAsBytes(combined, flush: true);
     return {
       'outPath': outPath,

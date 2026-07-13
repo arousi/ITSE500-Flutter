@@ -207,21 +207,26 @@ class ModelGroupList extends StatelessWidget {
                               label: Text(t,
                                   style: TextStyle(fontSize: 10, color: c)),
                             );
-                        if (isChat)
+                        if (isChat) {
                           chips.add(chip(Icons.chat_bubble_outline, 'chat',
                               Colors.blueGrey));
-                        if (isVision)
+                        }
+                        if (isVision) {
                           chips.add(chip(Icons.visibility_outlined, 'vision',
                               Colors.deepPurple));
-                        if (isImageGen)
+                        }
+                        if (isImageGen) {
                           chips.add(
                               chip(Icons.image_outlined, 'image', Colors.teal));
-                        if (isEmb)
+                        }
+                        if (isEmb) {
                           chips.add(chip(
                               Icons.linear_scale, 'embeddings', Colors.indigo));
-                        if (isAudio)
+                        }
+                        if (isAudio) {
                           chips.add(
                               chip(Icons.graphic_eq, 'audio', Colors.orange));
+                        }
                         if (chips.isEmpty) return const SizedBox.shrink();
                         return Wrap(spacing: 4, children: chips);
                       }).toList(),

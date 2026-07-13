@@ -120,8 +120,9 @@ class CustomUser {
     if (lastName != null) map['last_name'] = lastName;
     if (email != null) map['email'] = email;
     if (phoneNumber != null) map['phone_number'] = phoneNumber;
-    if (biometricEnabled != null)
+    if (biometricEnabled != null) {
       map['biometric_enabled'] = biometricEnabled! ? 1 : 0;
+    }
     if (lastModified != null) map['last_modified'] = lastModified;
     if (isArchived != null) map['is_archived'] = isArchived! ? 1 : 0;
     if (isVisitor != null) map['is_visitor'] = isVisitor! ? 1 : 0;
@@ -130,11 +131,13 @@ class CustomUser {
     if (emailPin != null) map['email_pin'] = emailPin;
     if (emailPinCreated != null) map['email_pin_created'] = emailPinCreated;
     if (emailVerified != null) map['email_verified'] = emailVerified! ? 1 : 0;
-    if (profileEmailVerified != null)
+    if (profileEmailVerified != null) {
       map['profile_email_verified'] = profileEmailVerified! ? 1 : 0;
+    }
     if (profileEmailPin != null) map['profile_email_pin'] = profileEmailPin;
-    if (profileEmailPinCreated != null)
+    if (profileEmailPinCreated != null) {
       map['profile_email_pin_created'] = profileEmailPinCreated;
+    }
     if (isStaff != null) map['is_staff'] = isStaff! ? 1 : 0;
     if (isSuperuser != null) map['is_superuser'] = isSuperuser! ? 1 : 0;
     if (deviceId != null) map['device_id'] = deviceId;

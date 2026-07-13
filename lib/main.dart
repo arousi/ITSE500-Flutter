@@ -67,7 +67,7 @@ Future<void> main() async {
       // — no network fetch, no console 404 — and rely on the in-code default
       // base URLs. Provider keys on web come from OAuth / secure storage, never
       // from a bundled .env.
-      dotenv.testLoad(fileInput: '');
+      dotenv.loadFromString(envString: '', isOptional: true);
     } else {
       await dotenv.load(fileName: '.env');
     }

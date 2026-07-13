@@ -186,10 +186,12 @@ class AuthCubit extends Cubit<AuthState> {
       final refreshToken = payload['refresh_token']?.toString();
       final providerAccess = payload['provider_access_token']?.toString();
       final idToken = payload['id_token']?.toString();
-      if (accessToken != null)
+      if (accessToken != null) {
         await secureStorage.write(key: 'access_token', value: accessToken);
-      if (refreshToken != null)
+      }
+      if (refreshToken != null) {
         await secureStorage.write(key: 'refresh_token', value: refreshToken);
+      }
       if (providerAccess != null && providerAccess.isNotEmpty) {
         if (provider == 'openrouter') {
           await secureStorage.write(
@@ -217,7 +219,7 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   Future<void> completeOpenRouterOAuth(Uri returnUri) async {
-    emit(AuthOAuthCompleting('openrouter'));
+    emit(const AuthOAuthCompleting('openrouter'));
     try {
       logger
           .i('Completing OpenRouter OAuth; returnUri=${returnUri.toString()}');
@@ -239,10 +241,12 @@ class AuthCubit extends Cubit<AuthState> {
       final accessToken = payload['access_token']?.toString();
       final refreshToken = payload['refresh_token']?.toString();
       final providerAccess = payload['provider_access_token']?.toString();
-      if (accessToken != null)
+      if (accessToken != null) {
         await secureStorage.write(key: 'access_token', value: accessToken);
-      if (refreshToken != null)
+      }
+      if (refreshToken != null) {
         await secureStorage.write(key: 'refresh_token', value: refreshToken);
+      }
       if (providerAccess != null && providerAccess.isNotEmpty) {
         await secureStorage.write(key: 'openrouter_key', value: providerAccess);
       }
@@ -296,15 +300,16 @@ class AuthCubit extends Cubit<AuthState> {
       final launched = await launchUrl(Uri.parse(patchedAuthUrl),
           mode: LaunchMode.externalApplication);
       logger.i('launchUrl(Google) result=$launched');
-      if (!launched)
+      if (!launched) {
         emit(const AuthOAuthError('google', 'Failed to launch browser'));
+      }
     } catch (e) {
       emit(AuthOAuthError('google', e.toString()));
     }
   }
 
   Future<void> completeGoogleOAuth(Uri returnUri) async {
-    emit(AuthOAuthCompleting('google'));
+    emit(const AuthOAuthCompleting('google'));
     try {
       logger.i('Completing Google OAuth; returnUri=${returnUri.toString()}');
       final code = returnUri.queryParameters['code'];
@@ -325,12 +330,15 @@ class AuthCubit extends Cubit<AuthState> {
       final refreshToken = payload['refresh_token']?.toString();
       final idToken = payload['id_token']?.toString();
       final emailVerified = payload['email_verified'] == true;
-      if (accessToken != null)
+      if (accessToken != null) {
         await secureStorage.write(key: 'access_token', value: accessToken);
-      if (refreshToken != null)
+      }
+      if (refreshToken != null) {
         await secureStorage.write(key: 'refresh_token', value: refreshToken);
-      if (idToken != null)
+      }
+      if (idToken != null) {
         await secureStorage.write(key: 'google_id_token', value: idToken);
+      }
       if (emailVerified) await prefs.saveBool('email_verified', true);
       try {
         await prefs.saveBool('google_auth_enabled', true);
@@ -371,15 +379,16 @@ class AuthCubit extends Cubit<AuthState> {
       final launched = await launchUrl(Uri.parse(patchedAuthUrl),
           mode: LaunchMode.externalApplication);
       logger.i('launchUrl(Microsoft) result=$launched');
-      if (!launched)
+      if (!launched) {
         emit(const AuthOAuthError('microsoft', 'Failed to launch browser'));
+      }
     } catch (e) {
       emit(AuthOAuthError('microsoft', e.toString()));
     }
   }
 
   Future<void> completeMicrosoftOAuth(Uri returnUri) async {
-    emit(AuthOAuthCompleting('microsoft'));
+    emit(const AuthOAuthCompleting('microsoft'));
     try {
       logger.i('Completing Microsoft OAuth; returnUri=${returnUri.toString()}');
       final code = returnUri.queryParameters['code'];
@@ -399,12 +408,15 @@ class AuthCubit extends Cubit<AuthState> {
       final accessToken = payload['access_token']?.toString();
       final refreshToken = payload['refresh_token']?.toString();
       final idToken = payload['id_token']?.toString();
-      if (accessToken != null)
+      if (accessToken != null) {
         await secureStorage.write(key: 'access_token', value: accessToken);
-      if (refreshToken != null)
+      }
+      if (refreshToken != null) {
         await secureStorage.write(key: 'refresh_token', value: refreshToken);
-      if (idToken != null)
+      }
+      if (idToken != null) {
         await secureStorage.write(key: 'microsoft_id_token', value: idToken);
+      }
       try {
         await prefs.saveBool('ms_auth_enabled', true);
       } catch (_) {}
@@ -543,7 +555,7 @@ class AuthCubit extends Cubit<AuthState> {
         await prefs.remove('google_auth_enabled');
         await prefs.remove('ms_auth_enabled');
         await prefs.remove('openrouter_auth_enabled');
-        await prefs.remove('biometric_auth_enabled');
+        await secureStorage.delete(key: 'biometric_auth_enabled');
       } catch (_) {}
       // Also clear any cached manual hotspot host from repository secure storage key
       // (Repository method keeps in-memory cache; we intentionally do not clear that to allow re-login session decisions)
@@ -559,7 +571,7 @@ class AuthCubit extends Cubit<AuthState> {
         await prefs.remove('google_auth_enabled');
         await prefs.remove('ms_auth_enabled');
         await prefs.remove('openrouter_auth_enabled');
-        await prefs.remove('biometric_auth_enabled');
+        await secureStorage.delete(key: 'biometric_auth_enabled');
       } catch (_) {}
       emit(AuthInitial());
     }
@@ -584,7 +596,7 @@ class AuthCubit extends Cubit<AuthState> {
         await prefs.remove('google_auth_enabled');
         await prefs.remove('ms_auth_enabled');
         await prefs.remove('openrouter_auth_enabled');
-        await prefs.remove('biometric_auth_enabled');
+        await secureStorage.delete(key: 'biometric_auth_enabled');
       } catch (_) {}
       // Purge local DB (users, conversations, messages, oauth tables)
       await dataRepo.deleteAllLocalData();
@@ -662,8 +674,8 @@ class AuthCubit extends Cubit<AuthState> {
   // ------------------ Biometric Foreground Lock ------------------
   Future<void> _loadBiometricFlag() async {
     try {
-      _biometricEnabled =
-          await prefs.getBool('biometric_auth_enabled') ?? false;
+      final raw = await secureStorage.read(key: 'biometric_auth_enabled');
+      _biometricEnabled = raw == 'true';
     } catch (_) {
       _biometricEnabled = false;
     }
@@ -724,8 +736,8 @@ class AuthCubit extends Cubit<AuthState> {
           startedAt: DateTime.now(), reason: reason));
       final ok = await _localAuth.authenticate(
         localizedReason: 'Unlock to continue',
-        options:
-            const AuthenticationOptions(biometricOnly: true, stickyAuth: true),
+        biometricOnly: true,
+        persistAcrossBackgrounding: true,
       );
       if (ok) {
         emit(AuthAuthenticated());

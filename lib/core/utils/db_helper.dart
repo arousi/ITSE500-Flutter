@@ -501,9 +501,34 @@ class DatabaseHelper {
   Future<void> insertMessage(Message message) async {
     final db = await database;
     final msgMap = message.toJson();
+    // The 'messages' table schema only has: message_id, conversation_id, img,
+    // timestamp, vote, metadata, embedding, doc. Message.toJson() emits a
+    // superset of fields (user_id, request_id, response_id, output_id,
+    // has_image, img_Url, has_embedding, has_document, doc_url) that are
+    // sourced from the request/response/output tables and joined back in on
+    // read (see fetchMessages). Filter to known columns so extra fields don't
+    // cause a "no column named ..." SQL error.
+    const allowedColumns = {
+      'message_id',
+      'conversation_id',
+      'img',
+      'timestamp',
+      'vote',
+      'metadata',
+      'embedding',
+      'doc',
+    };
+    final filtered = <String, dynamic>{
+      for (final entry in msgMap.entries)
+        if (allowedColumns.contains(entry.key)) entry.key: entry.value,
+    };
+    // Map camelCase JSON keys that don't match column names 1:1.
+    if (msgMap.containsKey('img_Url')) {
+      filtered['img'] = msgMap['img_Url'];
+    }
     await db.insert(
       'messages',
-      msgMap,
+      filtered,
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
